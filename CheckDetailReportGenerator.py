@@ -81,21 +81,21 @@ xl = pd.ExcelFile(filepath + inputfile) #use pandas' excel reader
 df = xl.parse()
 df = df.replace(pd.np.nan, '', regex=True)  #replaces all types of NAN entries with blank space
 xl.close()
-
-
 groupedby_Batch = df.groupby('Gift Batch Number')
 for name1, group1 in groupedby_Batch:
     fl = filepath + str(group1.iloc[0,6]) + " - check " + str(group1.iloc[0,1]) + ".xlsx"
     print(fl)
-    #fl = filepath + 'test' + str(name1) + '.xlsx'
     with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
         ws = wb.add_worksheet('Report')
         #add formats
-        #wb = addformats(wb)
         header1 = "&CCheck Detail Report"
         footer1 = "&L&F" + "&RPage &P of &N"
         ws.set_header(header1)
         ws.set_footer(footer1)
+        ws.set_landscape()
+        ws.fit_to_pages(1,0)
+        startingdatarow = 7
+        ws.repeat_rows(startingdatarow) #repeats header row on each page for printing
         fmt_money = wb.add_format({'num_format': '$#,##0.00'})
         fmt_date = wb.add_format({'num_format': 'mm/dd/yyyy'})
         fmt_bold = wb.add_format({'bold': True})
@@ -103,6 +103,12 @@ for name1, group1 in groupedby_Batch:
         fmt_designated_2 = wb.add_format({'bg_color': '#6aa84f', 'bold': True, 'num_format': '$#,##0.00'}) #light green
         fmt_rightbrain = wb.add_format({'bg_color': '#674ea7', 'bold': True, 'num_format': '$#,##0.00'})   #dark purple
         fmt_rightbrain_2 = wb.add_format({'bg_color': '#8e7cc3', 'bold': True, 'num_format': '$#,##0.00'}) #light purple
+        fmt_artsed = wb.add_format({'bg_color': '#ff9900', 'bold': True, 'num_format': '$#,##0.00'})   #orange
+        fmt_artsed_2 = wb.add_format({'bg_color': '#f6b26b', 'bold': True, 'num_format': '$#,##0.00'}) #light orange
+        fmt_community = wb.add_format({'bg_color': '#0b5394', 'bold': True, 'num_format': '$#,##0.00'})   #blue
+        fmt_community_2 = wb.add_format({'bg_color': '#6fa8dc', 'bold': True, 'num_format': '$#,##0.00'}) #light blue
+        fmt_holding = wb.add_format({'bg_color': '#666666', 'bold': True, 'num_format': '$#,##0.00'})   #dark grey
+        fmt_holding_2 = wb.add_format({'bg_color': '#b7b7b7', 'bold': True, 'num_format': '$#,##0.00'}) #light grey
         fmt_total = wb.add_format({'bg_color': '#ffff00', 'bold': True, 'num_format': '$#,##0.00'}) #yellow
 
         ws.write(0,0, "Check Detail Report")
@@ -118,7 +124,6 @@ for name1, group1 in groupedby_Batch:
         ws.write(6,4,'Fund',fmt_bold)
         ws.write(6,5,'Gift ID',fmt_bold)
         ws.write(6,6,'Amount',fmt_bold)
-        startingdatarow = 7
         r = startingdatarow   #row counter
         subgroup = group1.groupby('Fund Category')
         #initialize length counters for column width
@@ -133,9 +138,21 @@ for name1, group1 in groupedby_Batch:
                 for row in group3.itertuples():
                     columnwidths = writedetailrow(ws,r,row,columnwidths)
                     r += 1
-                writesubtotal2(ws,name2,name3,fmt_designated_2,r,firstappealrow,r-1)
+                if name2 == "Designated":
+                    _fmt2 = fmt_designated_2
+                elif name2 == "Community":
+                    _fmt2 = fmt_community_2
+                elif name2 == "Arts Ed":
+                    _fmt2 = fmt_artsed_2
+                writesubtotal2(ws,name2,name3,_fmt2,r,firstappealrow,r-1)
                 r += 1
-            writesubtotal(ws,name2,fmt_designated,r,firstdatarow,r-1)
+            if name2 == "Designated":
+                _fmt = fmt_designated
+            elif name2 == "Community":
+                _fmt = fmt_community
+            elif name2 == "Arts Ed":
+                _fmt = fmt_artsed
+            writesubtotal(ws,name2,_fmt,r,firstdatarow,r-1)
             r += 1
         writetotal(ws,fmt_total,r,startingdatarow,r-2)
         print("total number of rows:" + str(r))
