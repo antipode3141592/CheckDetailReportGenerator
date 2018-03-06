@@ -1,4 +1,6 @@
 #   XLSX Report Generator
+#   Copyright 2018 by Sean Vo Kirkpatrick using GNU GPL v3
+#   skirkpatrick@racc.org or sean@studioantipode.com or seanvokirkpatrick@gmail.com
 #   
 #   Creates a formatted Excel .xlsx summary report with subtotals from an input file
 #   
@@ -7,11 +9,23 @@
 #   Tested using    - Anaconda 5.0.0
 #                   - pandas 0.22.0
 #                   - XlsxWriter 1.0.2
-#                   - DateTime 4.2
 #   IDE: Visual Studio 2017 Community Edition
 
-#import datetime as dt
-#import datetime
+# License Info:
+#   This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import datetime as dt
 import pandas as pd
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
@@ -72,7 +86,8 @@ def writetotal(ws,fmt,r,row_1st,row_last):
     ws.write_formula(xl_rowcol_to_cell(r,6), formula, fmt)
     return
 
-filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
+#filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
+filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
 inputfile = "CHECK_DE.XLSX"
 xl = pd.ExcelFile(filepath + inputfile) #use pandas' excel reader
 #   columns of import sheet
@@ -83,8 +98,13 @@ df = df.replace(pd.np.nan, '', regex=True)  #replaces all types of NAN entries w
 xl.close()
 groupedby_Batch = df.groupby('Gift Batch Number')
 for name1, group1 in groupedby_Batch:
-    fl = filepath + str(group1.iloc[0,6]) + " - check " + str(group1.iloc[0,1]) + ".xlsx"
-    print(fl)
+    if group1.iloc[0,1] != "":
+        fl = filepath + "{:s}".format(group1.iloc[0,6]) + " - check {:.0f}".format(group1.iloc[0,1]) + ".xlsx"
+    else:
+        print("no check number!  using truncated filename")
+        fl = filepath + "{:s}".format(group1.iloc[0,6]) + ".xlsx"
+    print("Filename: " + fl)
+    summary = group1.groupby(['Fund Description','Appeal ID']).sum()
     with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
         ws = wb.add_worksheet('Report')
         #add formats
@@ -93,37 +113,45 @@ for name1, group1 in groupedby_Batch:
         ws.set_header(header1)
         ws.set_footer(footer1)
         ws.set_landscape()
-        ws.fit_to_pages(1,0)
-        startingdatarow = 7
+        ws.fit_to_pages(1,0)    #printing is 1 page wide, no limit on height/length
+        #ws.hide_gridlines(0)    #do not show gridlines
+        startingdatarow = 4     #indicates which row to start writing data to
         ws.repeat_rows(startingdatarow) #repeats header row on each page for printing
         fmt_money = wb.add_format({'num_format': '$#,##0.00'})
         fmt_date = wb.add_format({'num_format': 'mm/dd/yyyy'})
-        fmt_bold = wb.add_format({'bold': True})
-        fmt_designated = wb.add_format({'bg_color': '#38761d', 'bold': True, 'num_format': '$#,##0.00'})   #dark green
-        fmt_designated_2 = wb.add_format({'bg_color': '#6aa84f', 'bold': True, 'num_format': '$#,##0.00'}) #light green
-        fmt_rightbrain = wb.add_format({'bg_color': '#674ea7', 'bold': True, 'num_format': '$#,##0.00'})   #dark purple
-        fmt_rightbrain_2 = wb.add_format({'bg_color': '#8e7cc3', 'bold': True, 'num_format': '$#,##0.00'}) #light purple
-        fmt_artsed = wb.add_format({'bg_color': '#ff9900', 'bold': True, 'num_format': '$#,##0.00'})   #orange
-        fmt_artsed_2 = wb.add_format({'bg_color': '#f6b26b', 'bold': True, 'num_format': '$#,##0.00'}) #light orange
-        fmt_community = wb.add_format({'bg_color': '#0b5394', 'bold': True, 'num_format': '$#,##0.00'})   #blue
-        fmt_community_2 = wb.add_format({'bg_color': '#6fa8dc', 'bold': True, 'num_format': '$#,##0.00'}) #light blue
-        fmt_holding = wb.add_format({'bg_color': '#666666', 'bold': True, 'num_format': '$#,##0.00'})   #dark grey
-        fmt_holding_2 = wb.add_format({'bg_color': '#b7b7b7', 'bold': True, 'num_format': '$#,##0.00'}) #light grey
-        fmt_total = wb.add_format({'bg_color': '#ffff00', 'bold': True, 'num_format': '$#,##0.00'}) #yellow
+        fmt_dataheader = wb.add_format({'bold': True, 'bg_color': '#000000', 'font_color': '#FFFFFF', })
+        fmt_artsed = wb.add_format({'bg_color': '#92d050', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #dark green
+        fmt_artsed_2 = wb.add_format({'bg_color': '#d8e4bc', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light green
+        fmt_rightbrain = wb.add_format({'bg_color': '#60497a', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #dark purple
+        fmt_rightbrain_2 = wb.add_format({'bg_color': '#b1a0c7', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light purple
+        fmt_community = wb.add_format({'bg_color': '#ffff00', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #yellow
+        fmt_community_2 = wb.add_format({'bg_color': '#eeedb3', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light yellow
+        fmt_designated = wb.add_format({'bg_color': '#ff9900', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #orange
+        fmt_designated_2 = wb.add_format({'bg_color': '#f6b26b', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light orange
+        fmt_raccu = wb.add_format({'bg_color': '#0b5394', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #blue
+        fmt_raccu_2 = wb.add_format({'bg_color': '#6fa8dc', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light blue
+        fmt_holding = wb.add_format({'bg_color': '#666666', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #dark grey
+        fmt_holding_2 = wb.add_format({'bg_color': '#b7b7b7', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light grey
+        fmt_total = wb.add_format({'bg_color': '#ffc000', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':6}) #light orange
 
-        ws.write(0,0, "Check Detail Report")
-        ws.write(3,0, "Check Number: ")
-        ws.write(3,1, str(group1.iloc[0,1]))
-        ws.write(4,0, "Check Date: ")
-        ws.write(4,1, str(group1.iloc[0,2]), fmt_date)
+        ws.write(0,0, "Check Number: ")
+        if group1.iloc[0,1] != "":
+            ws.write(0,1, '{:.0f}'.format(group1.iloc[0,1]))
+        else:
+            ws.write(0,1, " --- ")
+        ws.write(1,0, "Check Date: ")
+        if group1.iloc[0,2] != "":
+            ws.write(1,1, '{:s}'.format(group1.iloc[0,2]), fmt_date)
+        else:
+            ws.write(1,1, " --- ")
         #writer header
-        ws.write(6,0,'Name',fmt_bold)
-        ws.write(6,1,'Reference',fmt_bold)
-        ws.write(6,2,'Appeal ID',fmt_bold)
-        ws.write(6,3,'Date',fmt_bold)
-        ws.write(6,4,'Fund',fmt_bold)
-        ws.write(6,5,'Gift ID',fmt_bold)
-        ws.write(6,6,'Amount',fmt_bold)
+        ws.write(startingdatarow-1,0,'Name',fmt_dataheader)
+        ws.write(startingdatarow-1,1,'Reference',fmt_dataheader)
+        ws.write(startingdatarow-1,2,'Appeal ID',fmt_dataheader)
+        ws.write(startingdatarow-1,3,'Date',fmt_dataheader)
+        ws.write(startingdatarow-1,4,'Fund',fmt_dataheader)
+        ws.write(startingdatarow-1,5,'Gift ID',fmt_dataheader)
+        ws.write(startingdatarow-1,6,'Amount',fmt_dataheader)
         r = startingdatarow   #row counter
         subgroup = group1.groupby('Fund Category')
         #initialize length counters for column width
@@ -144,6 +172,14 @@ for name1, group1 in groupedby_Batch:
                     _fmt2 = fmt_community_2
                 elif name2 == "Arts Ed":
                     _fmt2 = fmt_artsed_2
+                elif name2 == "Right Brain":
+                    _fmt2 = fmt_rightbrain_2
+                elif name2 == "Holding":
+                    _fmt2 = fmt_holding_2
+                elif name2 == "RACC":
+                    _fmt2 = fmt_raccu_2
+                elif name2 == "Holding":
+                    _fmt2 = fmt_holding_2
                 writesubtotal2(ws,name2,name3,_fmt2,r,firstappealrow,r-1)
                 r += 1
             if name2 == "Designated":
@@ -152,11 +188,19 @@ for name1, group1 in groupedby_Batch:
                 _fmt = fmt_community
             elif name2 == "Arts Ed":
                 _fmt = fmt_artsed
+            elif name2 == "Right Brain":
+                _fmt = fmt_rightbrain
+            elif name2 == "Holding":
+                _fmt = fmt_holding
+            elif name2 == "RACC":
+                _fmt = fmt_raccu
+            elif name2 == "Holding":
+                _fmt = fmt_holding
             writesubtotal(ws,name2,_fmt,r,firstdatarow,r-1)
             r += 1
         writetotal(ws,fmt_total,r,startingdatarow,r-2)
-        print("total number of rows:" + str(r))
-        #set column widths
+        r+=3
+        ws.write(r,0,"Reported by Sean K. on {}".format(dt.datetime.now().strftime("%m/%d/%y")))
         ws.set_column(0,0,columnwidths[0])
         ws.set_column(1,1,columnwidths[1])
         ws.set_column(2,2,columnwidths[2])
@@ -166,29 +210,3 @@ for name1, group1 in groupedby_Batch:
         ws.set_column(6,6,columnwidths[6])
         print("closing workbook")
     wb.close()
-
-#ws.set_column('Fund Split Amount', fmt_money)
-## Add total rows
-#for column in range(6, 11):
-#    # Determine where we will place the formula
-#    cell_location = xl_rowcol_to_cell(number_rows+1, column)
-#    # Get the range to use for the sum formula
-#    start_range = xl_rowcol_to_cell(1, column)
-#    end_range = xl_rowcol_to_cell(number_rows, column)
-#    # Construct and write the formula
-#    formula = "=SUM({:s}:{:s})".format(start_range, end_range)
-#    worksheet.write_formula(cell_location, formula, total_fmt)
-## Add a total label
-#worksheet.write_string(number_rows+1, 5, "Total",total_fmt)
-#percent_formula = "=1+(K{0}-G{0})/G{0}".format(number_rows+2)
-#worksheet.write_formula(number_rows+1, 11, percent_formula, total_percent_fmt)
-## Define our range for the color formatting
-#color_range = "L2:L{}".format(number_rows+1)
-## Add a format. Light red fill with dark red text.
-#format1 = workbook.add_format({'bg_color': '#FFC7CE',
-#                               'font_color': '#9C0006'})
-## Add a format. Green fill with dark green text.
-#format2 = workbook.add_format({'bg_color': '#C6EFCE',
-#                               'font_color': '#006100'})
-
-#df1a = df1[df1['Gift Batch Number'].values == 6822]
