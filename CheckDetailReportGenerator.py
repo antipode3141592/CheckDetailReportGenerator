@@ -3,9 +3,7 @@
 #   skirkpatrick@racc.org or sean@studioantipode.com or seanvokirkpatrick@gmail.com
 #   
 #   Creates a formatted Excel .xlsx summary report with subtotals from an input file
-#   
-#   
-
+#
 #   Tested using    - Anaconda 5.0.0
 #                   - pandas 0.22.0
 #                   - XlsxWriter 1.0.2
@@ -16,12 +14,10 @@
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
-
 #    This program is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
-
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -116,7 +112,7 @@ for name1, group1 in groupedby_Batch:
         ws.fit_to_pages(1,0)    #printing is 1 page wide, no limit on height/length
         #ws.hide_gridlines(0)    #do not show gridlines
         startingdatarow = 4     #indicates which row to start writing data to
-        ws.repeat_rows(startingdatarow) #repeats header row on each page for printing
+        ws.repeat_rows(startingdatarow-1) #repeats header row on each page for printing (r-1 because it uses excel row numbers, not 0-index rows)
         fmt_money = wb.add_format({'num_format': '$#,##0.00'})
         fmt_date = wb.add_format({'num_format': 'mm/dd/yyyy'})
         fmt_dataheader = wb.add_format({'bold': True, 'bg_color': '#000000', 'font_color': '#FFFFFF', })
