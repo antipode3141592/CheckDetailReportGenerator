@@ -2,11 +2,12 @@
 #   Copyright 2018 by Sean Vo Kirkpatrick using GNU GPL v3
 #   skirkpatrick@racc.org or sean@studioantipode.com or seanvokirkpatrick@gmail.com
 #   
-#   Creates a formatted Excel .xlsx summary report with subtotals from each batch in an input file
+#   Creates a formatted Excel .xlsx summary report with subtotals from each group of Appeals in an input file
 #
 #   Tested using    - Anaconda 5.0.0
 #                   - pandas 0.22.0
 #                   - XlsxWriter 1.0.2
+#                   - xlrd 1.1.0
 #   IDE: Visual Studio 2017 Community Edition
 
 # License Info:
@@ -23,6 +24,7 @@
 
 import datetime as dt
 import pandas as pd
+import xlrd
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 from xlsxwriter.utility import xl_range
@@ -84,27 +86,32 @@ def writetotal(ws,fmt,r,row_1st,row_last):
 
 #filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
-inputfile = "CHECK_DE.XLSX"
+outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\17-18\\"
+inputfile = "PLEDGE_Q.XLSX"
 xl = pd.ExcelFile(filepath + inputfile) #use pandas' excel reader
 #   columns of import sheet
-#   ['Gift Batch Number', 'Gift Check Number', 'Check Date', 'Fund Category', 'Name', 
-#       'Gift Reference', 'Appeal ID', 'Gift Date', 'Fund Description', 'Gift ID', 'Fund Split Amount']
+#   ['Gift Type',	'Constituent Specific Attributes Arts Card Date',	'Constituent Specific Attributes Arts Card - OLD Date',	'Gift Pledge Balance',	'Gift Is Anonymous',
+#   	'Matching Gift Import ID',	'Gift Import ID',	'Fund Category',	'Fund ID',	'Constituent ID',	'Name',	'Appeal ID',	'Gift Reference',	'Gift Date',
+#   	'Fund Description',	'Gift ID',	'Fund Split Amount',	'Preferred Address Lines',	'Preferred Address Line 1',	'Preferred Address Line 2',	'Preferred Address Line 3',
+#   	'Preferred City_ State',	'Preferred ZIP']
+
 df = xl.parse()
 df = df.replace(pd.np.nan, '', regex=True)  #replaces all types of NAN entries with blank space
 xl.close()
-groupedby_Batch = df.groupby('Gift Batch Number')
-for name1, group1 in groupedby_Batch:
-    if group1.iloc[0,1] != "":
-        fl = filepath + "{:s}".format(group1.iloc[0,6]) + " - check {:.0f}".format(group1.iloc[0,1]) + ".xlsx"
-    else:
-        print("no check number!  using truncated filename")
-        fl = filepath + "{:s}".format(group1.iloc[0,6]) + ".xlsx"
-    print("Filename: " + fl)
-    summary = group1.groupby(['Fund Description','Appeal ID']).sum()
+groupedby_Appeal = df.groupby('Appeal ID')
+for name1, group1 in groupedby_Appeal:
+
+    #if group1.iloc[0,1] != "":
+    #    fl = filepath + "{:s}".format(group1.iloc[0,6]) + " - check {:.0f}".format(group1.iloc[0,1]) + ".xlsx"
+    #else:
+    #    print("no check number!  using truncated filename")
+    #    fl = filepath + "{:s}".format(group1.iloc[0,6]) + ".xlsx"
+    #print("Filename: " + fl)
+    #summary = group1.groupby(['Fund Description','Appeal ID']).sum()
     with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
-        ws = wb.add_worksheet('Report')
+        ws = wb.add_worksheet("{}".format(dt.datetime.now().strftime("%m-%d-%y")))
         #add formats
-        header1 = "&CCheck Detail Report"
+        header1 = "&CPledge Report - {:s}".format(name1)
         footer1 = "&L&Z&F" + "&RPage &P of &N"
         ws.set_header(header1)
         ws.set_footer(footer1)
