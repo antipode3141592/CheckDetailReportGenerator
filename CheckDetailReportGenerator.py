@@ -82,8 +82,8 @@ def writetotal(ws,fmt,r,row_1st,row_last):
     ws.write_formula(xl_rowcol_to_cell(r,6), formula, fmt)
     return
 
-filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
-#filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
+#filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
+filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
 inputfile = "CHECK_DE.XLSX"
 xl = pd.ExcelFile(filepath + inputfile) #use pandas' excel reader
 #   columns of import sheet
@@ -105,27 +105,17 @@ for name1, group1 in groupedby_Batch:
         ws = wb.add_worksheet('Report')
         #add formats
         header1 = "&CCheck Detail Report"
-        footer1 = "&L&F" + "&RPage &P of &N"
+        footer1 = "&L&Z&F" + "&RPage &P of &N"
         ws.set_header(header1)
         ws.set_footer(footer1)
         ws.set_landscape()
         ws.fit_to_pages(1,0)    #printing is 1 page wide, no limit on height/length
         fmt_money = wb.add_format({'num_format': '$#,##0.00'})
         fmt_date = wb.add_format({'num_format': 'mm/dd/yyyy'})
-        fmt_dataheader = wb.add_format({'bold': True, 'bg_color': '#000000', 'font_color': '#FFFFFF', })
-        fmt_artsed = wb.add_format({'bg_color': '#92d050', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #dark green
-        fmt_artsed_2 = wb.add_format({'bg_color': '#d8e4bc', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light green
-        fmt_rightbrain = wb.add_format({'bg_color': '#60497a', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #dark purple
-        fmt_rightbrain_2 = wb.add_format({'bg_color': '#b1a0c7', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light purple
-        fmt_community = wb.add_format({'bg_color': '#ffff00', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #yellow
-        fmt_community_2 = wb.add_format({'bg_color': '#eeedb3', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light yellow
-        fmt_designated = wb.add_format({'bg_color': '#ff9900', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #orange
-        fmt_designated_2 = wb.add_format({'bg_color': '#f6b26b', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light orange
-        fmt_raccu = wb.add_format({'bg_color': '#0b5394', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #blue
-        fmt_raccu_2 = wb.add_format({'bg_color': '#6fa8dc', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light blue
-        fmt_holding = wb.add_format({'bg_color': '#666666', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #dark grey
-        fmt_holding_2 = wb.add_format({'bg_color': '#b7b7b7', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light grey
-        fmt_total = wb.add_format({'bg_color': '#ffc000', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':6}) #light orange
+        fmt_dataheader = wb.add_format({'bold': True, 'bg_color': '#000000', 'font_color': '#FFFFFF' })
+        fmt_subtotal = wb.add_format({'bg_color': '#b7b7b7', 'bold': True , 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light grey
+        fmt_subtotal2 = wb.add_format({'bg_color': '#666666', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #dark grey
+        fmt_total = wb.add_format({'bg_color': '#434343', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1, 'font_color': '#FFFFFF'})   #darkest grey, white bold text
 
         ws.write(0,0, "Check Number: ")
         if group1.iloc[0,1] != "":
@@ -137,18 +127,25 @@ for name1, group1 in groupedby_Batch:
             ws.write(1,1, '{:s}'.format(group1.iloc[0,2]), fmt_date)
         else:
             ws.write(1,1, " --- ")
-
+        #Rollup report for top of report
         #print list of categories and appeals
         r=1
-        ws.write(0,4,'Category',fmt_dataheader)
-        ws.write(0,5,'Appeal ID',fmt_dataheader)
+        ws.write(0,3,'Category',fmt_dataheader)
+        ws.write(0,4,'Appeal ID',fmt_dataheader)
+        ws.write(0,5,'Subtotals',fmt_dataheader)
         ws.write(0,6,'Totals',fmt_dataheader)
-        summed = group1.groupby(['Fund Category', 'Appeal ID'])
-        for n1,g1 in summed:
-            ws.write(r,4,n1[0])
-            ws.write(r,5,n1[1])
-            r+=1
-        startingdatarow = r+3     #indicates which row to start writing data to
+        #summed = group1.groupby(['Fund Category', 'Appeal ID'])
+        group_category = group1.groupby('Fund Category')
+        for n1,g1 in group_category:
+            ws.write(r,3,n1)
+            group_appeal = g1.groupby('Appeal ID')
+            for n2,g2 in group_appeal:
+                ws.write(r,4,n2)
+                r += 1
+            ws.write(r,4,n1,fmt_subtotal)
+            ws.write(r,5,"",fmt_subtotal)
+            r += 1
+        startingdatarow = r + 3     #indicates which row to start writing data to
         if(startingdatarow < 4):
             startingdatarow = 4
         ws.repeat_rows(startingdatarow-1) #repeats header row on each page for printing (r-1 because it uses excel row numbers, not 0-index rows)
@@ -175,45 +172,20 @@ for name1, group1 in groupedby_Batch:
                 for row in group3.itertuples():
                     columnwidths = writedetailrow(ws,r,row,columnwidths)
                     r += 1
-                if name2 == "Designated":
-                    _fmt2 = fmt_designated_2
-                elif name2 == "Community":
-                    _fmt2 = fmt_community_2
-                elif name2 == "Arts Ed":
-                    _fmt2 = fmt_artsed_2
-                elif name2 == "Right Brain":
-                    _fmt2 = fmt_rightbrain_2
-                elif name2 == "Holding":
-                    _fmt2 = fmt_holding_2
-                elif name2 == "RACC":
-                    _fmt2 = fmt_raccu_2
-                elif name2 == "Holding":
-                    _fmt2 = fmt_holding_2
-                writesubtotal2(ws,name2,name3,_fmt2,r,firstappealrow,r-1)
+                writesubtotal2(ws,name2,name3,fmt_subtotal,r,firstappealrow,r-1)
                 formula = "={:s}".format(xl_rowcol_to_cell(r,6))
-                ws.write_formula(xl_rowcol_to_cell(row_subtotals,6),formula,fmt_money)
+                ws.write_formula(xl_rowcol_to_cell(row_subtotals,5),formula,fmt_money)
                 row_subtotals += 1
                 r += 1
-            if name2 == "Designated":
-                _fmt = fmt_designated
-            elif name2 == "Community":
-                _fmt = fmt_community
-            elif name2 == "Arts Ed":
-                _fmt = fmt_artsed
-            elif name2 == "Right Brain":
-                _fmt = fmt_rightbrain
-            elif name2 == "Holding":
-                _fmt = fmt_holding
-            elif name2 == "RACC":
-                _fmt = fmt_raccu
-            elif name2 == "Holding":
-                _fmt = fmt_holding
-            writesubtotal(ws,name2,_fmt,r,firstdatarow,r-1)
+            writesubtotal(ws,name2,fmt_subtotal2,r,firstdatarow,r-1)
+            formula = "={:s}".format(xl_rowcol_to_cell(r,6))
+            ws.write_formula(xl_rowcol_to_cell(row_subtotals,6),formula,fmt_subtotal)
+            row_subtotals += 1
             r += 1
         writetotal(ws,fmt_total,r,startingdatarow,r-2)
         formula = "={:s}".format(xl_rowcol_to_cell(r,6))
-        ws.write(row_subtotals,5,"Total")
-        ws.write_formula(xl_rowcol_to_cell(row_subtotals,6),formula,fmt_money)
+        ws.write(row_subtotals,5,"Total",fmt_total)
+        ws.write_formula(xl_rowcol_to_cell(row_subtotals,6),formula,fmt_total)
         r+=3
         ws.write(r,0,"Reported by Sean K. on {}".format(dt.datetime.now().strftime("%m/%d/%y")))
         ws.set_column(0,0,columnwidths[0])
