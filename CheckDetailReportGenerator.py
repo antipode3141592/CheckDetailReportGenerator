@@ -82,8 +82,8 @@ def writetotal(ws,fmt,r,row_1st,row_last):
     ws.write_formula(xl_rowcol_to_cell(r,6), formula, fmt)
     return
 
-#filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
-filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
+filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
+#filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
 inputfile = "CHECK_DE.XLSX"
 xl = pd.ExcelFile(filepath + inputfile) #use pandas' excel reader
 #   columns of import sheet
@@ -110,9 +110,6 @@ for name1, group1 in groupedby_Batch:
         ws.set_footer(footer1)
         ws.set_landscape()
         ws.fit_to_pages(1,0)    #printing is 1 page wide, no limit on height/length
-        #ws.hide_gridlines(0)    #do not show gridlines
-        startingdatarow = 4     #indicates which row to start writing data to
-        ws.repeat_rows(startingdatarow-1) #repeats header row on each page for printing (r-1 because it uses excel row numbers, not 0-index rows)
         fmt_money = wb.add_format({'num_format': '$#,##0.00'})
         fmt_date = wb.add_format({'num_format': 'mm/dd/yyyy'})
         fmt_dataheader = wb.add_format({'bold': True, 'bg_color': '#000000', 'font_color': '#FFFFFF', })
@@ -140,6 +137,21 @@ for name1, group1 in groupedby_Batch:
             ws.write(1,1, '{:s}'.format(group1.iloc[0,2]), fmt_date)
         else:
             ws.write(1,1, " --- ")
+
+        #print list of categories and appeals
+        r=1
+        ws.write(0,4,'Category',fmt_dataheader)
+        ws.write(0,5,'Appeal ID',fmt_dataheader)
+        ws.write(0,6,'Totals',fmt_dataheader)
+        summed = group1.groupby(['Fund Category', 'Appeal ID'])
+        for n1,g1 in summed:
+            ws.write(r,4,n1[0])
+            ws.write(r,5,n1[1])
+            r+=1
+        startingdatarow = r+3     #indicates which row to start writing data to
+        if(startingdatarow < 4):
+            startingdatarow = 4
+        ws.repeat_rows(startingdatarow-1) #repeats header row on each page for printing (r-1 because it uses excel row numbers, not 0-index rows)
         #writer header
         ws.write(startingdatarow-1,0,'Name',fmt_dataheader)
         ws.write(startingdatarow-1,1,'Reference',fmt_dataheader)
@@ -149,6 +161,7 @@ for name1, group1 in groupedby_Batch:
         ws.write(startingdatarow-1,5,'Gift ID',fmt_dataheader)
         ws.write(startingdatarow-1,6,'Amount',fmt_dataheader)
         r = startingdatarow   #row counter
+        row_subtotals = 1
         subgroup = group1.groupby('Fund Category')
         #initialize length counters for column width
         columnwidths = [19,10,10,11,20,8,10]
@@ -177,6 +190,9 @@ for name1, group1 in groupedby_Batch:
                 elif name2 == "Holding":
                     _fmt2 = fmt_holding_2
                 writesubtotal2(ws,name2,name3,_fmt2,r,firstappealrow,r-1)
+                formula = "={:s}".format(xl_rowcol_to_cell(r,6))
+                ws.write_formula(xl_rowcol_to_cell(row_subtotals,6),formula,fmt_money)
+                row_subtotals += 1
                 r += 1
             if name2 == "Designated":
                 _fmt = fmt_designated
@@ -195,6 +211,9 @@ for name1, group1 in groupedby_Batch:
             writesubtotal(ws,name2,_fmt,r,firstdatarow,r-1)
             r += 1
         writetotal(ws,fmt_total,r,startingdatarow,r-2)
+        formula = "={:s}".format(xl_rowcol_to_cell(r,6))
+        ws.write(row_subtotals,5,"Total")
+        ws.write_formula(xl_rowcol_to_cell(row_subtotals,6),formula,fmt_money)
         r+=3
         ws.write(r,0,"Reported by Sean K. on {}".format(dt.datetime.now().strftime("%m/%d/%y")))
         ws.set_column(0,0,columnwidths[0])
