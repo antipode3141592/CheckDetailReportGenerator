@@ -24,65 +24,14 @@
 
 import datetime as dt
 import pandas as pd
-import xlrd
-import xlsxwriter
-from xlsxwriter.utility import xl_rowcol_to_cell
-from xlsxwriter.utility import xl_range
-
-# define those functions!
-def writedetailrow(ws,r,row,width):
-    #didn't use a loop for the comparisons because some columns don't need resizing
-    if len(str(row[5])) > width[0]:
-        width[0] = len(str(row[5]))
-    if len(str(row[6])) > width[1]:
-        width[1] = len(str(row[6]))
-    if len(str(row[7])) > width[2]:
-        width[2] = len(str(row[7]))
-    if len(str(row[9])) > width[4]:
-        width[4] = len(str(row[9]))
-    if len(str(row[10])) > width[5]:
-        width[5] = len(str(row[10]))
-    ws.write(r,0,row[5])
-    ws.write(r,1,row[6])
-    ws.write(r,2,row[7])
-    ws.write(r,3,row[8],fmt_date)
-    ws.write(r,4,row[9])
-    ws.write(r,5,row[10])
-    ws.write(r,6,row[11],fmt_money)
-    return width
-
-def writesubtotal(ws,groupname, fmt,r,row_1st,row_last):
-    ws.write(r,0,"Subtotal - " + str(groupname), fmt)
-    ws.write(r,1,"", fmt)
-    ws.write(r,2,"", fmt)
-    ws.write(r,3,"", fmt)
-    ws.write(r,4,"", fmt)
-    ws.write(r,5,"", fmt)
-    formula = "=SUBTOTAL(109,{:s})".format(xl_range(row_1st,6,row_last,6))
-    ws.write_formula(xl_rowcol_to_cell(r,6), formula, fmt)
-    return
-
-def writesubtotal2(ws,groupname1, groupname2, fmt,r,row_1st,row_last):
-    ws.write(r,0,"Subtotal - " + str(groupname1) + " - " + str(groupname2), fmt)
-    ws.write(r,1,"", fmt)
-    ws.write(r,2,"", fmt)
-    ws.write(r,3,"", fmt)
-    ws.write(r,4,"", fmt)
-    ws.write(r,5,"", fmt)
-    formula = "=SUBTOTAL(109,{:s})".format(xl_range(row_1st,6,row_last,6))
-    ws.write_formula(xl_rowcol_to_cell(r,6), formula, fmt)
-    return
-
-def writetotal(ws,fmt,r,row_1st,row_last):
-    ws.write(r,0,"Total",fmt)
-    ws.write(r,1,"", fmt)
-    ws.write(r,2,"", fmt)
-    ws.write(r,3,"", fmt)
-    ws.write(r,4,"", fmt)
-    ws.write(r,5,"", fmt)
-    formula = "=SUBTOTAL(109,{:s})".format(xl_range(row_1st,6,row_last,6))
-    ws.write_formula(xl_rowcol_to_cell(r,6), formula, fmt)
-    return
+import os
+import openpyxl
+from openpyxl.reader.excel import load_workbook
+from openpyxl import Workbook
+#from openpyxl import Worksheet
+#import xlsxwriter
+#from xlsxwriter.utility import xl_rowcol_to_cell
+#from xlsxwriter.utility import xl_range
 
 #filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
@@ -100,107 +49,39 @@ df = df.replace(pd.np.nan, '', regex=True)  #replaces all types of NAN entries w
 xl.close()
 groupedby_Appeal = df.groupby('Appeal ID')
 for name1, group1 in groupedby_Appeal:
-
-    #if group1.iloc[0,1] != "":
-    #    fl = filepath + "{:s}".format(group1.iloc[0,6]) + " - check {:.0f}".format(group1.iloc[0,1]) + ".xlsx"
-    #else:
-    #    print("no check number!  using truncated filename")
-    #    fl = filepath + "{:s}".format(group1.iloc[0,6]) + ".xlsx"
-    #print("Filename: " + fl)
-    #summary = group1.groupby(['Fund Description','Appeal ID']).sum()
-    with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
-        ws = wb.add_worksheet("{}".format(dt.datetime.now().strftime("%m-%d-%y")))
-        #add formats
-        header1 = "&CPledge Report - {:s}".format(name1)
-        footer1 = "&L&Z&F" + "&RPage &P of &N"
-        ws.set_header(header1)
-        ws.set_footer(footer1)
-        ws.set_landscape()
-        ws.fit_to_pages(1,0)    #printing is 1 page wide, no limit on height/length
-        fmt_money = wb.add_format({'num_format': '$#,##0.00'})
-        fmt_date = wb.add_format({'num_format': 'mm/dd/yyyy'})
-        fmt_dataheader = wb.add_format({'bold': True, 'bg_color': '#000000', 'font_color': '#FFFFFF' })
-        fmt_subtotal = wb.add_format({'bg_color': '#b7b7b7', 'bold': True , 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light grey
-        fmt_subtotal2 = wb.add_format({'bg_color': '#666666', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #dark grey
-        fmt_total = wb.add_format({'bg_color': '#434343', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1, 'font_color': '#FFFFFF'})   #darkest grey, white bold text
-
-        ws.write(0,0, "Check Number: ")
-        if group1.iloc[0,1] != "":
-            ws.write(0,1, '{:.0f}'.format(group1.iloc[0,1]))
-        else:
-            ws.write(0,1, " --- ")
-        ws.write(1,0, "Check Date: ")
-        if group1.iloc[0,2] != "":
-            ws.write(1,1, '{:s}'.format(group1.iloc[0,2]), fmt_date)
-        else:
-            ws.write(1,1, " --- ")
+    #try openin file
+    fp = outputpath + name1 + ".xlsx"
+    fp2 = outputpath + name1 + "_test.xlsx"
+    if os.path.exists(fp):
+        print("{0} exists!".format(name1))
+        wb = openpyxl.load_workbook(fp)
+        ws = wb.create_sheet(title="{0}".format(dt.datetime.now().strftime("%m-%d-%y")))
         #Rollup report for top of report
-        #print list of categories and appeals
-        r=1
-        ws.write(0,3,'Category',fmt_dataheader)
-        ws.write(0,4,'Appeal ID',fmt_dataheader)
-        ws.write(0,5,'Subtotals',fmt_dataheader)
-        ws.write(0,6,'Totals',fmt_dataheader)
-        #summed = group1.groupby(['Fund Category', 'Appeal ID'])
-        group_category = group1.groupby('Fund Category')
-        for n1,g1 in group_category:
-            ws.write(r,3,n1)
-            group_appeal = g1.groupby('Appeal ID')
-            for n2,g2 in group_appeal:
-                ws.write(r,4,n2)
-                r += 1
-            ws.write(r,4,n1,fmt_subtotal)
-            ws.write(r,5,"",fmt_subtotal)
+        #print list of categories
+        r=2
+        ws.cell(column=3,row=1,value="Category")
+        ws.cell(column=4,row=1,value="Subtotals")
+        ws.cell(column=5,row=1,value="Totals")
+        groupby_category = group1.groupby('Fund Category')
+        for n1,g1 in groupby_category:
+            ws.cell(column=3,row=r,value=n1)
             r += 1
         startingdatarow = r + 3     #indicates which row to start writing data to
         if(startingdatarow < 4):
             startingdatarow = 4
-        ws.repeat_rows(startingdatarow-1) #repeats header row on each page for printing (r-1 because it uses excel row numbers, not 0-index rows)
+
         #writer header
-        ws.write(startingdatarow-1,0,'Name',fmt_dataheader)
-        ws.write(startingdatarow-1,1,'Reference',fmt_dataheader)
-        ws.write(startingdatarow-1,2,'Appeal ID',fmt_dataheader)
-        ws.write(startingdatarow-1,3,'Date',fmt_dataheader)
-        ws.write(startingdatarow-1,4,'Fund',fmt_dataheader)
-        ws.write(startingdatarow-1,5,'Gift ID',fmt_dataheader)
-        ws.write(startingdatarow-1,6,'Amount',fmt_dataheader)
-        r = startingdatarow   #row counter
-        row_subtotals = 1
-        subgroup = group1.groupby('Fund Category')
-        #initialize length counters for column width
-        columnwidths = [19,10,10,11,20,8,10]
-        for name2, group2 in subgroup:
-            print("Current Group: " + str(name2) + " on row " + str(r))
-            firstdatarow = r    #preserve the 1st row number of each Fund Category group
-            appealgroup = group2.groupby('Appeal ID')
-            for name3, group3 in appealgroup:
-                firstappealrow = r      #preserve the 1st row number of each Appeal group
-                print("Current Appeal: " + str(name3) + " on row " + str(r))
-                for row in group3.itertuples():
-                    columnwidths = writedetailrow(ws,r,row,columnwidths)
-                    r += 1
-                writesubtotal2(ws,name2,name3,fmt_subtotal,r,firstappealrow,r-1)
-                formula = "={:s}".format(xl_rowcol_to_cell(r,6))
-                ws.write_formula(xl_rowcol_to_cell(row_subtotals,5),formula,fmt_money)
-                row_subtotals += 1
-                r += 1
-            writesubtotal(ws,name2,fmt_subtotal2,r,firstdatarow,r-1)
-            formula = "={:s}".format(xl_rowcol_to_cell(r,6))
-            ws.write_formula(xl_rowcol_to_cell(row_subtotals,6),formula,fmt_subtotal)
-            row_subtotals += 1
-            r += 1
-        writetotal(ws,fmt_total,r,startingdatarow,r-2)
-        formula = "={:s}".format(xl_rowcol_to_cell(r,6))
-        ws.write(row_subtotals,5,"Total",fmt_total)
-        ws.write_formula(xl_rowcol_to_cell(row_subtotals,6),formula,fmt_total)
-        r+=3
-        ws.write(r,0,"Reported by Sean K. on {}".format(dt.datetime.now().strftime("%m/%d/%y")))
-        ws.set_column(0,0,columnwidths[0])
-        ws.set_column(1,1,columnwidths[1])
-        ws.set_column(2,2,columnwidths[2])
-        ws.set_column(3,3,columnwidths[3])
-        ws.set_column(4,4,columnwidths[4])
-        ws.set_column(5,5,columnwidths[5])
-        ws.set_column(6,6,columnwidths[6])
-        print("closing workbook")
-    wb.close()
+        ws.cell(column=1,row=startingdatarow-1,value="Name")
+        ws.cell(column=2,row=startingdatarow-1,value="Reference")
+        ws.cell(column=3,row=startingdatarow-1,value="Appeal ID")
+        ws.cell(column=4,row=startingdatarow-1,value="Date")
+        ws.cell(column=5,row=startingdatarow-1,value="Fund")
+        ws.cell(column=6,row=startingdatarow-1,value="Gift ID")
+        ws.cell(column=7,row=startingdatarow-1,value="Amount")
+
+        for n1,g1 in groupby_category:
+            for row in g1.itertuples():
+                print("{0},{1},{2}".format(row[10],row[11],row[12]))
+                #print(row[])
+
+        wb.save(fp2)
