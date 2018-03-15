@@ -161,7 +161,7 @@ for name1, group1 in groupedby_Batch:
         row_subtotals = 1
         subgroup = group1.groupby('Fund Category')
         #initialize length counters for column width
-        columnwidths = [19,10,10,11,20,8,10]
+        column_widths = [19,10,10,11,20,8,10]
         for name2, group2 in subgroup:
             print("Current Group: " + str(name2) + " on row " + str(r))
             firstdatarow = r    #preserve the 1st row number of each Fund Category group
@@ -170,7 +170,7 @@ for name1, group1 in groupedby_Batch:
                 firstappealrow = r      #preserve the 1st row number of each Appeal group
                 print("Current Appeal: " + str(name3) + " on row " + str(r))
                 for row in group3.itertuples():
-                    columnwidths = writedetailrow(ws,r,row,columnwidths)
+                    column_widths = writedetailrow(ws,r,row,column_widths)
                     r += 1
                 writesubtotal2(ws,name2,name3,fmt_subtotal,r,firstappealrow,r-1)
                 formula = "={:s}".format(xl_rowcol_to_cell(r,6))
@@ -188,12 +188,12 @@ for name1, group1 in groupedby_Batch:
         ws.write_formula(xl_rowcol_to_cell(row_subtotals,6),formula,fmt_total)
         r+=3
         ws.write(r,0,"Reported by Sean K. on {}".format(dt.datetime.now().strftime("%m/%d/%y")))
-        ws.set_column(0,0,columnwidths[0])
-        ws.set_column(1,1,columnwidths[1])
-        ws.set_column(2,2,columnwidths[2])
-        ws.set_column(3,3,columnwidths[3])
-        ws.set_column(4,4,columnwidths[4])
-        ws.set_column(5,5,columnwidths[5])
-        ws.set_column(6,6,columnwidths[6])
+        ws.set_column(0,0,column_widths[0])
+        ws.set_column(1,1,column_widths[1])
+        ws.set_column(2,2,column_widths[2])
+        ws.set_column(3,3,column_widths[3])
+        ws.set_column(4,4,column_widths[4])
+        ws.set_column(5,5,column_widths[5])
+        ws.set_column(6,6,column_widths[6])
         print("closing workbook")
     wb.close()
