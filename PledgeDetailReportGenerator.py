@@ -115,6 +115,7 @@ for name1, group1 in groupedby_Appeal:
     #try opening file, replacing '/' with '-' to satisfy file naming rules
     fp = outputpath + str(name1).replace("/","-") + ".xlsx"
     fp2 = outputpath + "Test\\" + str(name1).replace("/","-") + "_test.xlsx"
+    #check if [Appeal ID].xlsx exists
     if os.path.exists(fp):
         print("{0} exists!".format(name1))
         wb = openpyxl.load_workbook(fp)
@@ -123,6 +124,7 @@ for name1, group1 in groupedby_Appeal:
         print("{0} not found! Creating new file...".format(fp))
         wb = Workbook()
         ws = wb.active
+
     ws.title = "{0}".format(dt.datetime.now().strftime("%m-%d-%y"))
     column_widths = [19,10,12,11,20,11,11]   #initial guesses at column width
     
