@@ -34,6 +34,16 @@ from openpyxl.styles.numbers import FORMAT_CURRENCY_USD_SIMPLE
 from openpyxl.utils import get_column_letter
 from openpyxl import Workbook
 
+def format_range(r1,c1,r2,c2,**options):
+    for column in range(c1,c2+1):
+        for row in range(r1,r2+1):
+            _cell = ws.cell(row=row,column=column)
+            if options.get("fill"):
+                _cell.fill = options.get("fill")
+            if options.get("font"):
+                _cell.font = options.get("font")
+    return
+
 def write_detailrow(r,row,ws):
     ws.cell(row=r,column=1,value="{0}".format(row[11]))
     ws.cell(row=r,column=2,value="{0}".format(row[12]))
@@ -50,10 +60,9 @@ def write_summaryrow(r,_r,ws,category):
     ws.cell(row=r,column=1,value="Subtotal - {0}".format(category))
     _a = ws.cell(row=r,column=7,value="=SUBTOTAL(109,G{0}:G{1})".format(_r,r-1))
     _a.number_format = FORMAT_CURRENCY_USD_SIMPLE
-    for c in range(1,8):
-        _a = ws.cell(row=r,column=c)
-        _a.font = Font(b=True)
-        _a.fill = PatternFill(fill_type='solid',patternType='solid',fgColor=Color(rgb="00b7b7b7"))    #light grey
+    font = Font(b=True)
+    fill = PatternFill(fill_type='solid',patternType='solid',fgColor=Color(rgb="00b7b7b7"))    #light grey
+    format_range(r,1,r,7,fill=fill,font=font)
     r+=1
     return(r)
 
@@ -68,10 +77,10 @@ def write_totalrow(r,_r,ws):
     r+=1
     return(r)
 
-#filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
-#outputpath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\17-18\\"
-filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
-outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\17-18\\"
+filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
+outputpath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\17-18\\"
+#filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
+#outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\17-18\\"
 inputfile = "PLEDGE_Q.XLSX"
 if os.path.exists(filepath + inputfile):
     print(filepath + inputfile)
@@ -96,21 +105,19 @@ for name1, group1 in groupedby_Appeal:
         print("{0} exists!".format(name1))
     else:
         print("{0} not found!".format(fp))
+        continue    #next iteration of loop
         #TODO same as file found, but create file first
     wb = openpyxl.load_workbook(fp)
     ws = wb.create_sheet(title="{0}".format(dt.datetime.now().strftime("%m-%d-%y")))
     #Rollup report for top of report
     #print list of categories
     r=2 #openpyxl uses 1-based index, same as excel
-    _a = ws.cell(row=1,column=3,value="Category")
-    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
-    _a.fill = PatternFill(fill_type="solid",fgColor=Color(rgb="00434343"))
-    _a = ws.cell(row=1,column=4,value="Subtotals")
-    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
-    _a.fill = PatternFill(fill_type="solid",fgColor=Color(rgb="00434343"))
-    _a = ws.cell(row=1,column=5,value="Totals")
-    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
-    _a.fill = PatternFill(fill_type="solid",fgColor=Color(rgb="00434343"))
+    font_header2 = Font(b=True,color=Color(rgb="00FFFFFF"))
+    fill_header2 = PatternFill(fill_type="solid",fgColor=Color(rgb="00434343"))
+    ws.cell(row=1,column=3,value="Category")
+    ws.cell(row=1,column=4,value="Subtotals")
+    ws.cell(row=1,column=5,value="Totals")
+    format_range(1,3,1,5,font=font_header2,fill=fill_header2)
 
     groupby_category = group1.groupby('Fund Category')
     for n1,g1 in groupby_category:
@@ -121,27 +128,16 @@ for name1, group1 in groupedby_Appeal:
         startingdatarow = 4
     r = startingdatarow
     #writer header
-    _a = ws.cell(row=startingdatarow-1,column=1,value="Name")
-    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
-    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
-    _a = ws.cell(row=startingdatarow-1,column=2,value="Reference")
-    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
-    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
-    _a = ws.cell(row=startingdatarow-1,column=3,value="Appeal ID")
-    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
-    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
-    _a = ws.cell(row=startingdatarow-1,column=4,value="Date")
-    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
-    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
-    _a = ws.cell(row=startingdatarow-1,column=5,value="Fund")
-    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
-    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
-    _a = ws.cell(row=startingdatarow-1,column=6,value="Gift ID")
-    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
-    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
-    _a = ws.cell(row=startingdatarow-1,column=7,value="Amount")
-    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
-    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
+    font_header = Font(b=True,color=Color(rgb="00FFFFFF"))
+    fill_header = PatternFill(fill_type="solid",fgColor=Color(rgb="00434343"))
+    ws.cell(row=startingdatarow-1,column=1,value="Name")
+    ws.cell(row=startingdatarow-1,column=2,value="Reference")
+    ws.cell(row=startingdatarow-1,column=3,value="Appeal ID")
+    ws.cell(row=startingdatarow-1,column=4,value="Date")
+    ws.cell(row=startingdatarow-1,column=5,value="Fund")
+    ws.cell(row=startingdatarow-1,column=6,value="Gift ID")
+    ws.cell(row=startingdatarow-1,column=7,value="Amount")
+    format_range(startingdatarow-1,1,startingdatarow-1,7,font=font_header,fill=fill_header)
 
     for n1,g1 in groupby_category:
         startingcategoryrow = r
