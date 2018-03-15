@@ -128,6 +128,9 @@ for name1, group1 in groupedby_Appeal:
     
     #Page Setup
     ws.page_setup.orientation = 'landscape'
+    ws.page_setup.fitToPage = True
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = False
     ws.HeaderFooter.differentOddEven = False    
     ws.HeaderFooter.oddHeader.center.text = "Pledge Report"
     ws.HeaderFooter.oddFooter.left.text = "&Z&F"
@@ -176,9 +179,7 @@ for name1, group1 in groupedby_Appeal:
     format_range(startingrolluprow,6,r2,7,num_format=FORMAT_CURRENCY_USD_SIMPLE)
 
     #resize columns
-    print(column_widths)
     for i in range(1,8):
         ws.column_dimensions[get_column_letter(i)].width = column_widths[i-1]
-
     ws.cell(row=r+2,column=1,value="Reported by Sean K. on {}".format(dt.datetime.now().strftime("%m/%d/%y")))
     wb.save(fp2)
