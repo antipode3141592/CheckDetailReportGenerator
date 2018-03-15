@@ -24,17 +24,15 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime as dt
+
 import pandas as pd
 import os
 import openpyxl
 from openpyxl.reader.excel import load_workbook
-from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Font
+from openpyxl.styles import Border, Side, Alignment, Protection, Font, Color, PatternFill
+from openpyxl.styles.numbers import FORMAT_CURRENCY_USD_SIMPLE
 from openpyxl.utils import get_column_letter
 from openpyxl import Workbook
-#from openpyxl import Worksheet
-#import xlsxwriter
-#from xlsxwriter.utility import xl_rowcol_to_cell
-#from xlsxwriter.utility import xl_range
 
 def write_detailrow(r,row,ws):
     ws.cell(row=r,column=1,value="{0}".format(row[11]))
@@ -43,30 +41,37 @@ def write_detailrow(r,row,ws):
     ws.cell(row=r,column=4,value="{0}".format(row[14]))
     ws.cell(row=r,column=5,value="{0}".format(row[15]))
     ws.cell(row=r,column=6,value="{0}".format(row[16]))
-    a = ws.cell(row=r,column=7,value="{0}".format(row[17]))
-    a.number_format = '$#,##0.00'
-    #c.style(Font(bold=True))
-    #c.number_style("$#,#00.00")
+    _a = ws.cell(row=r,column=7,value="={0}".format(row[17]))
+    _a.number_format = FORMAT_CURRENCY_USD_SIMPLE
     r+=1    
     return(r)
 
-def write_summaryrow(r,_r,row,ws):
-    ws.cell(row=r,column=1,value="Subtotal - {0}".format(row[8]))
-    ws.cell(row=r,column=2)
-    ws.cell(row=r,column=3)
-    ws.cell(row=r,column=4)
-    ws.cell(row=r,column=5)
-    ws.cell(row=r,column=6)
-    ws.cell(row=r,column=7,value="=SUBTOTAL(109,G{0}:G{1})".format(_r,r-1))
+def write_summaryrow(r,_r,ws,category):
+    ws.cell(row=r,column=1,value="Subtotal - {0}".format(category))
+    _a = ws.cell(row=r,column=7,value="=SUBTOTAL(109,G{0}:G{1})".format(_r,r-1))
+    _a.number_format = FORMAT_CURRENCY_USD_SIMPLE
+    for c in range(1,8):
+        _a = ws.cell(row=r,column=c)
+        _a.font = Font(b=True)
+        _a.fill = PatternFill(fill_type='solid',patternType='solid',fgColor=Color(rgb="00b7b7b7"))    #light grey
     r+=1
     return(r)
 
-#print("oh hai")
-filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
-outputpath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\17-18\\"
+def write_totalrow(r,_r,ws):
+    ws.cell(row=r,column=1,value="Total")
+    _a = ws.cell(row=r,column=7,value="=SUBTOTAL(109,G{0}:G{1})".format(_r,r-2))
+    _a.number_format = FORMAT_CURRENCY_USD_SIMPLE
+    for c in range(1,8):
+        _a = ws.cell(row=r,column=c)
+        _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
+        _a.fill = PatternFill(fill_type='solid',patternType='solid',fgColor=Color(rgb="00000000"))
+    r+=1
+    return(r)
 
-#filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
-#outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\17-18\\"
+#filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
+#outputpath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\17-18\\"
+filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
+outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\17-18\\"
 inputfile = "PLEDGE_Q.XLSX"
 if os.path.exists(filepath + inputfile):
     print(filepath + inputfile)
@@ -85,42 +90,65 @@ xl.close()
 groupedby_Appeal = df.groupby('Appeal ID')
 for name1, group1 in groupedby_Appeal:
     #try openin file
-    fp = outputpath + name1 + ".xlsx"
-    fp2 = outputpath + "Test\\" + name1 + "_test.xlsx"
+    fp = outputpath + str(name1).replace("/","-") + ".xlsx"
+    fp2 = outputpath + "Test\\" + str(name1).replace("/","-") + "_test.xlsx"
     if os.path.exists(fp):
         print("{0} exists!".format(name1))
-        wb = openpyxl.load_workbook(fp)
-        ws = wb.create_sheet(title="{0}".format(dt.datetime.now().strftime("%m-%d-%y")))
-        #Rollup report for top of report
-        #print list of categories
-        r=2 #openpyxl uses 1-based index, same as excel
-        ws.cell(row=1,column=3,value="Category")
-        ws.cell(row=1,column=4,value="Subtotals")
-        ws.cell(row=1,column=5,value="Totals")
-        groupby_category = group1.groupby('Fund Category')
-        for n1,g1 in groupby_category:
-            ws.cell(column=3,row=r,value=n1)
-            r += 1
-        startingdatarow = r + 3     #indicates which row to start writing data to
-        if(startingdatarow < 4):
-            startingdatarow = 4
-        r = startingdatarow
-        #writer header
-        ws.cell(row=startingdatarow-1,column=1,value="Name",)
-        ws.cell(row=startingdatarow-1,column=2,value="Reference")
-        ws.cell(row=startingdatarow-1,column=3,value="Appeal ID")
-        ws.cell(row=startingdatarow-1,column=4,value="Date")
-        ws.cell(row=startingdatarow-1,column=5,value="Fund")
-        ws.cell(row=startingdatarow-1,column=6,value="Gift ID")
-        ws.cell(row=startingdatarow-1,column=7,value="Amount")
-
-        for n1,g1 in groupby_category:
-            startingcategoryrow = r
-            for row in g1.itertuples():
-                r = write_detailrow(r,row,ws)
-            r = write_summaryrow(r,startingcategoryrow,row,ws)
-            #ws.cell(column=7,row=r,value="=SUBTOTAL(109,G{0}:G{1})".format(startingcategoryrow,r-1))
-            #r+=1
-        wb.save(fp2)
     else:
         print("{0} not found!".format(fp))
+        #TODO same as file found, but create file first
+    wb = openpyxl.load_workbook(fp)
+    ws = wb.create_sheet(title="{0}".format(dt.datetime.now().strftime("%m-%d-%y")))
+    #Rollup report for top of report
+    #print list of categories
+    r=2 #openpyxl uses 1-based index, same as excel
+    _a = ws.cell(row=1,column=3,value="Category")
+    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
+    _a.fill = PatternFill(fill_type="solid",fgColor=Color(rgb="00434343"))
+    _a = ws.cell(row=1,column=4,value="Subtotals")
+    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
+    _a.fill = PatternFill(fill_type="solid",fgColor=Color(rgb="00434343"))
+    _a = ws.cell(row=1,column=5,value="Totals")
+    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
+    _a.fill = PatternFill(fill_type="solid",fgColor=Color(rgb="00434343"))
+
+    groupby_category = group1.groupby('Fund Category')
+    for n1,g1 in groupby_category:
+        ws.cell(column=3,row=r,value=n1)
+        r += 1
+    startingdatarow = r + 3     #indicates which row to start writing data to
+    if(startingdatarow < 4):
+        startingdatarow = 4
+    r = startingdatarow
+    #writer header
+    _a = ws.cell(row=startingdatarow-1,column=1,value="Name")
+    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
+    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
+    _a = ws.cell(row=startingdatarow-1,column=2,value="Reference")
+    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
+    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
+    _a = ws.cell(row=startingdatarow-1,column=3,value="Appeal ID")
+    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
+    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
+    _a = ws.cell(row=startingdatarow-1,column=4,value="Date")
+    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
+    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
+    _a = ws.cell(row=startingdatarow-1,column=5,value="Fund")
+    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
+    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
+    _a = ws.cell(row=startingdatarow-1,column=6,value="Gift ID")
+    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
+    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
+    _a = ws.cell(row=startingdatarow-1,column=7,value="Amount")
+    _a.font = Font(b=True,color=Color(rgb="00FFFFFF"))
+    _a.fill = PatternFill(fill_type="solid",bgColor=Color(rgb="00434343"))
+
+    for n1,g1 in groupby_category:
+        startingcategoryrow = r
+        cat =""
+        for row in g1.itertuples():
+            r = write_detailrow(r,row,ws)
+            cat = row[8]
+        r = write_summaryrow(r,startingcategoryrow,ws,cat)
+    r = write_totalrow(r,startingdatarow,ws)
+    wb.save(fp2)
