@@ -95,7 +95,7 @@ xl.close()
 groupedby_Batch = df.groupby('Gift Batch Number')
 for name1, group1 in groupedby_Batch:
     if group1.iloc[0,1] != "":
-        fl = filepath + "{:s}".format(group1.iloc[0,6]) + " - check {:.0f}".format(group1.iloc[0,1]) + ".xlsx"
+        fl = filepath + "{:s}".format(group1.iloc[0,6].replace("/","_")) + " - check {:.0f}".format(group1.iloc[0,1]) + ".xlsx"
     else:
         print("no check number!  using truncated filename")
         fl = filepath + "{:s}".format(group1.iloc[0,6]) + ".xlsx"
