@@ -54,7 +54,7 @@ def write_detailrow(r,row,ws,column_widths):
     ws.cell(row=r,column=1,value="{0}".format(row[6]))          #Name
     ws.cell(row=r,column=2,value="{0}".format(row[7]))          #Reference
     ws.cell(row=r,column=3,value="{0}".format(row[8]))          #Appeal ID
-    ws.cell(row=r,column=4,value="{0}".format(row[9].strftime("%m/%d/%Y"))) #Date
+    ws.cell(row=r,column=4,value="{0}".format(row[9].strftime("%m/%d/%y"))) #Date
     ws.cell(row=r,column=5,value="{0}".format(row[10]))         #Fund (description)
     ws.cell(row=r,column=6,value="{0}".format(row[11]))         #Gift ID (from Raiser's Edge)
     _a = ws.cell(row=r,column=7,value="={0}".format(row[12]))   #Amount
@@ -86,11 +86,13 @@ def write_totalrow(r,_r,ws):
     r+=1
     return(r)
 
-#filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
-#outputpath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\17-18\\"
+#filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
+#outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\17-18\\"
+
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
-outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\17-18\\"
-inputfile = "PLEDGE_Q.XLSX"
+outputpath = "\\\\CONCORDIA\\lancentral\\Work for Art\\Raisers Edge Reports\\Pledge reports\\17-18\\"
+
+inputfile = "PLEDGE_R.XLSX"
 if os.path.exists(filepath + inputfile):
     print(filepath + inputfile)
 else:
@@ -171,6 +173,7 @@ for name1, group1 in groupedby_Appeal:
         startingcategoryrow = r
         cat =""     #placeholder for scope reasons
         for row in g1.itertuples():
+            print(row)
             r,column_widths = write_detailrow(r,row,ws,column_widths)
             cat = row[2]    #retain category name from the row to use in the subtotal description
         r = write_summaryrow(r,startingcategoryrow,ws,cat)
@@ -184,4 +187,4 @@ for name1, group1 in groupedby_Appeal:
     for i in range(1,8):
         ws.column_dimensions[get_column_letter(i)].width = column_widths[i-1]
     ws.cell(row=r+2,column=1,value="Reported by Sean K. on {}".format(dt.datetime.now().strftime("%m/%d/%y")))
-    wb.save(fp2)
+    wb.save(fp)
