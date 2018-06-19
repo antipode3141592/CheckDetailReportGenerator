@@ -68,6 +68,7 @@ def sterilizestring (s):
 
 #filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
+outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\Outgoing\\"
 inputfile = "CHECK.XLSX"
 xl = pd.ExcelFile(filepath + inputfile) #use pandas' excel reader
 #   columns of import sheet
@@ -79,9 +80,12 @@ df = df.replace(pd.np.nan, '', regex=True)  #replaces all types of NAN entries w
 xl.close()
 groupedby_Fund = df.groupby('Fund Description')
 for name1, group1 in groupedby_Fund:
-    fl = filepath + "{:s}".format(sterilizestring(group1.iloc[0,3])) + ".xlsx"
-    print("Filename: " + fl)
-    #summary = group1.groupby(['Fund Description']).sum()
+    localsum = group1['Fund Split Amount'].sum()
+    if localsum < 20.00:
+        print("Skipping group " + name1 + ", with sum of $" + str(localsum))
+        continue;
+    fl = outputpath + "{:s}".format(sterilizestring(group1.iloc[0,3])) + ".xlsx"
+    print("Group: " + name1 + " , sum $" + str(localsum))
     with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
         ws = wb.add_worksheet('Report')
         #add formats, header, and footer
@@ -94,8 +98,6 @@ for name1, group1 in groupedby_Fund:
         fmt_money = wb.add_format({'num_format': '$#,##0.00'})
         fmt_date = wb.add_format({'num_format': 'mm/dd/yyyy'})
         fmt_dataheader = wb.add_format({'bold': True, 'bg_color': '#000000', 'font_color': '#FFFFFF' })
-        #fmt_subtotal = wb.add_format({'bg_color': '#b7b7b7', 'bold': True , 'num_format': '$#,##0.00', 'bottom':1, 'top':1}) #light grey
-        #fmt_subtotal2 = wb.add_format({'bg_color': '#666666', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1})   #dark grey
         fmt_total = wb.add_format({'bg_color': '#434343', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1, 'font_color': '#FFFFFF'})   #darkest grey, white bold text
 
         startingdatarow = 1     #indicates which row to start writing data to
@@ -109,23 +111,19 @@ for name1, group1 in groupedby_Fund:
         ws.write(startingdatarow-1,5,'Amount',fmt_dataheader)
         r = startingdatarow   #row counter
         row_subtotals = 1
-        #subgroup = group1.groupby('Fund Category')
         #initialize length counters for column width
         column_widths = [19,10,11,20,8,10]
         for row in group1.itertuples():
             column_widths = writedetailrow(ws,r,row,column_widths)
             r += 1
         writetotal(ws,fmt_total,r,startingdatarow,r-1)
-        #formula = "={:s}".format(xl_rowcol_to_cell(r,6))
-        #ws.write(row_subtotals,5,"Total",fmt_total)
-        #ws.write_formula(xl_rowcol_to_cell(row_subtotals,6),formula,fmt_total)
         r+=3
-        ws.write(r,0,"Reported by Sean K. on {}".format(dt.datetime.now().strftime("%m/%d/%y")))
+        ws.write(r,0,"Reported by Sean Kirkpatrick on {}".format(dt.datetime.now().strftime("%m/%d/%y")))
         ws.set_column(0,0,column_widths[0])
         ws.set_column(1,1,column_widths[1])
         ws.set_column(2,2,column_widths[2])
         ws.set_column(3,3,column_widths[3])
         ws.set_column(4,4,column_widths[4])
         ws.set_column(5,5,column_widths[5])
-        print("closing workbook")
+        #print("closing workbook")
     wb.close()
