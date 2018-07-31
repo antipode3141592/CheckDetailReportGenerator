@@ -26,27 +26,36 @@ import pandas as pd
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 from xlsxwriter.utility import xl_range
+import win32com.client as win32
+import pyodbc 
+import os
+import numpy as np
+
+# GUI tools
+from traits.api import HasTraits, Str, Int
+from traitsui.api import View, Item
+from traitsui.menu import OKButton, CancelButton
 
 # define those functions!
 def writedetailrow(ws,r,row,width):
     #didn't use a loop for the comparisons because some columns don't need resizing
-    if len(str(row[5])) > width[0]:
-        width[0] = len(str(row[5]))
-    if len(str(row[6])) > width[1]:
-        width[1] = len(str(row[6]))
-    if len(str(row[7])) > width[2]:
-        width[2] = len(str(row[7]))
-    if len(str(row[9])) > width[4]:
-        width[4] = len(str(row[9]))
-    if len(str(row[10])) > width[5]:
-        width[5] = len(str(row[10]))
-    ws.write(r,0,row[5])
-    ws.write(r,1,row[6])
-    ws.write(r,2,row[7])
-    ws.write(r,3,row[8],fmt_date)
-    ws.write(r,4,row[9])
-    ws.write(r,5,row[10])
-    ws.write(r,6,row[11],fmt_money)
+    if len(str(row[15])) > width[0]:
+        width[0] = len(str(row[15]))
+    if len(str(row[14])) > width[1]:
+        width[1] = len(str(row[14]))
+    if len(str(row[3])) > width[2]:
+        width[2] = len(str(row[3]))
+    if len(str(row[2])) > width[4]:
+        width[4] = len(str(row[2]))
+    if len(str(row[4])) > width[5]:
+        width[5] = len(str(row[4]))
+    ws.write(r,0,row[15])
+    ws.write(r,1,row[14])
+    ws.write(r,2,row[3])
+    ws.write(r,3,str(row[19]))
+    ws.write(r,4,row[2])
+    ws.write(r,5,row[4])
+    ws.write(r,6,row[8],fmt_money)
     return width
 
 def writesubtotal(ws,groupname, fmt,r,row_1st,row_last):
@@ -82,25 +91,68 @@ def writetotal(ws,fmt,r,row_1st,row_last):
     ws.write_formula(xl_rowcol_to_cell(r,6), formula, fmt)
     return
 
+def sterilizestring (s):
+    s = str(s)
+    for char in "?.!/;:":
+        s = s.replace(char,'_');
+    return s
+
+cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};" #requires explicitily stating the sql driver
+                      "Server=overlook;"
+                      "Database=re_racc;"
+                      "Trusted_Connection=yes;")    #use windows integrated security
+cursor = cnxn.cursor()
+#note: this should be a stored procedure, i mean, look at this terrible formatting
+cursor.execute('select e.DESCRIPTION as Campaign, d.DESCRIPTION as Fund, f.DESCRIPTION as Appeal, b.UserGiftId as GiftID, g.RECORDS_ID, b.Type,	b.Amount TotalAmount, c.amount as SplitAmount, a.ANONYMOUS as AnonRecord, b.ANONYMOUS as AnonGift, a.CONSTITUENT_ID, g.FIRST_NAME, g.KEY_NAME, b.REF as Ref,CASE WHEN (b.TYPE = 1 or b.TYPE = 2) THEN CONCAT(g.FIRST_NAME, \' \', g.KEY_NAME)	WHEN (b.TYPE = 3) THEN g.KEY_NAME END as Name,	FORMAT(b.POST_DATE, \'MM/dd/yyyy\') as PostDate, Format(Convert(datetime, b.CHECK_DATE),\'MM/dd/yyyy\') as CheckDate, b.CHECK_NUMBER, FORMAT(b.DTE, \'MM/dd/yyyy\') as GiftDate, b.BATCH_NUMBER, h.LONGDESCRIPTION as FundCategory ' + 
+    'from RECORDS a join GIFT b on a.id = b.CONSTIT_ID join GiftSplit c on b.id = c.GiftId join FUND d on c.FundId = d.ID join CAMPAIGN e on c.CampaignId = e.ID join APPEAL f on c.AppealId = f.ID join CONSTITUENT g on a.id = g.RECORDS_ID join TABLEENTRIES h on d.FUND_CATEGORY = h.TABLEENTRIESID ' + 
+    'where (b.TYPE = 1 or b.TYPE = 2 or b.TYPE = 3) AND (e.DESCRIPTION LIKE \'Work for Art 201%\') AND (b.POST_DATE = \'2018-7-30\') and (g.SEQUENCE = 0) and (g.spouse_id is null) order by Campaign, Fund, Appeal, GiftDate')
+
+columns = [column[0] for column in cursor.description]
+print(columns)
+data = []   #grab results, put into a list, put list into numpy array, and then put numpy array into pandas dataframe
+for row in cursor:
+    data.append(tuple(row))
+    #print(row)
+df = pd.DataFrame.from_records(np.array(data),columns=columns)
+print(df.shape)
+
+#class MainWindow(HasTraits):
+#    view1 = View(resizable=True,
+#             height=0.5, width = 0.5,
+#             buttons = [OKButton, CancelButton])
+
+#class SQLData(HasTraits):
+#    sqlview = View()
+
+#MainWindow().configure_traits()
+
 #filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
-inputfile = "CHECK_DE.XLSX"
-xl = pd.ExcelFile(filepath + inputfile) #use pandas' excel reader
-#   columns of import sheet
-#   ['Gift Batch Number', 'Gift Check Number', 'Check Date', 'Fund Category', 'Name', 
-#       'Gift Reference', 'Appeal ID', 'Gift Date', 'Fund Description', 'Gift ID', 'Fund Split Amount']
-df = xl.parse()
-df = df.replace(pd.np.nan, '', regex=True)  #replaces all types of NAN entries with blank space
-xl.close()
-groupedby_Batch = df.groupby('Gift Batch Number')
+#inputfile = "CHECK_DE.XLSX"
+#xl = pd.ExcelFile(filepath + inputfile) #use pandas' excel reader
+##   columns of import sheet
+##   ['Gift Batch Number', 'Gift Check Number', 'Check Date', 'Fund Category', 'Name', 
+##       'Gift Reference', 'Appeal ID', 'Gift Date', 'Fund Description', 'Gift ID', 'Fund Split Amount']
+#df = xl.parse()
+#df = df.replace(pd.np.nan, '', regex=True)  #replaces all types of NAN entries with blank space
+#xl.close()
+#groupedby_Batch = df.groupby('Gift Batch Number')
+groupedby_Batch = df.groupby('BATCH_NUMBER')
 for name1, group1 in groupedby_Batch:
-    if group1.iloc[0,1] != "":
-        fl = filepath + "{:s}".format(group1.iloc[0,6].replace("/","_")) + " - check {:.0f}".format(group1.iloc[0,1]) + ".xlsx"
+    #if group1.iloc[0,1] != "":
+    print("---------------------")
+    print("Batch: " + str(name1))
+    print(group1)
+    if (str(group1.iloc[0,17]) != "" and str(group1.iloc[0,17]) != "None") and (str(group1.iloc[0,2]) != ""):
+        print("Appeal ID: " + group1.iloc[0,2] + ", Check# " + str(group1.iloc[0,19]))
+        fl = filepath + "{:s}".format(sterilizestring(group1.iloc[0,2])) + " - check {:s}".format(str(group1.iloc[0,17])) + ".xlsx"
+    elif (str(group1.iloc[0,17]) == "None"):
+        fl = filepath + "{:s}".format(sterilizestring(group1.iloc[0,2])) + " - Batch {:s}".format(name1) + ".xlsx"
     else:
         print("no check number!  using truncated filename")
-        fl = filepath + "{:s}".format(group1.iloc[0,6]) + ".xlsx"
+        fl = filepath + "{:s}".format(sterilizestring(group1.iloc[0,2])) + ".xlsx"
     print("Filename: " + fl)
-    summary = group1.groupby(['Fund Description','Appeal ID']).sum()
+    summary = group1.groupby(['Fund','Appeal']).sum()
     with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
         ws = wb.add_worksheet('Report')
         #add formats
@@ -118,13 +170,13 @@ for name1, group1 in groupedby_Batch:
         fmt_total = wb.add_format({'bg_color': '#434343', 'bold': True, 'num_format': '$#,##0.00', 'bottom':1, 'top':1, 'font_color': '#FFFFFF'})   #darkest grey, white bold text
 
         ws.write(0,0, "Check Number: ")
-        if group1.iloc[0,1] != "":
-            ws.write(0,1, '{:.0f}'.format(group1.iloc[0,1]))
+        if group1.iloc[0,19] != "":
+            ws.write(0,1, '{:s}'.format(str(group1.iloc[0,17])))
         else:
             ws.write(0,1, " --- ")
         ws.write(1,0, "Check Date: ")
-        if group1.iloc[0,2] != "":
-            ws.write(1,1, '{:s}'.format(group1.iloc[0,2]), fmt_date)
+        if group1.iloc[0,18] != "":
+            ws.write(1,1, '{:s}'.format(str(group1.iloc[0,16])))
         else:
             ws.write(1,1, " --- ")
         #Rollup report for top of report
@@ -135,10 +187,10 @@ for name1, group1 in groupedby_Batch:
         ws.write(0,5,'Subtotals',fmt_dataheader)
         ws.write(0,6,'Totals',fmt_dataheader)
         #summed = group1.groupby(['Fund Category', 'Appeal ID'])
-        group_category = group1.groupby('Fund Category')
+        group_category = group1.groupby('FundCategory')
         for n1,g1 in group_category:
             ws.write(r,3,n1)
-            group_appeal = g1.groupby('Appeal ID')
+            group_appeal = g1.groupby('Appeal')
             for n2,g2 in group_appeal:
                 ws.write(r,4,n2)
                 r += 1
@@ -159,13 +211,13 @@ for name1, group1 in groupedby_Batch:
         ws.write(startingdatarow-1,6,'Amount',fmt_dataheader)
         r = startingdatarow   #row counter
         row_subtotals = 1
-        subgroup = group1.groupby('Fund Category')
+        subgroup = group1.groupby('FundCategory')
         #initialize length counters for column width
         column_widths = [19,10,10,11,20,8,10]
         for name2, group2 in subgroup:
             print("Current Group: " + str(name2) + " on row " + str(r))
             firstdatarow = r    #preserve the 1st row number of each Fund Category group
-            appealgroup = group2.groupby('Appeal ID')
+            appealgroup = group2.groupby('Appeal')
             for name3, group3 in appealgroup:
                 firstappealrow = r      #preserve the 1st row number of each Appeal group
                 print("Current Appeal: " + str(name3) + " on row " + str(r))
