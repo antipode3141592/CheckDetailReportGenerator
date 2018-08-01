@@ -2,11 +2,16 @@
 #   Copyright 2018 by Sean Vo Kirkpatrick using GNU GPL v3
 #   skirkpatrick@racc.org or sean@studioantipode.com or seanvokirkpatrick@gmail.com
 #   
-#   Creates a formatted Excel .xlsx summary report with subtotals from each batch in an input file
+#   Creates a formatted Excel .xlsx summary report with subtotals, data pulled from Raiser's Edge DB directly
+#       using parameterized stored procedure
+#   Input:  a date variable
+#   Output: a bunch of reports
 #
 #   Tested using    - Anaconda 5.0.0
 #                   - pandas 0.22.0
 #                   - XlsxWriter 1.0.2
+#                   - pyodbc 4.0.23
+#                   - numpy 1.14.5
 #   IDE: Visual Studio 2017 Community Edition
 
 # License Info:
@@ -102,10 +107,12 @@ cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};" #requires explic
                       "Database=re_racc;"
                       "Trusted_Connection=yes;")    #use windows integrated security
 cursor = cnxn.cursor()
-#note: this should be a stored procedure, i mean, look at this terrible formatting
-cursor.execute('select e.DESCRIPTION as Campaign, d.DESCRIPTION as Fund, f.DESCRIPTION as Appeal, b.UserGiftId as GiftID, g.RECORDS_ID, b.Type,	b.Amount TotalAmount, c.amount as SplitAmount, a.ANONYMOUS as AnonRecord, b.ANONYMOUS as AnonGift, a.CONSTITUENT_ID, g.FIRST_NAME, g.KEY_NAME, b.REF as Ref,CASE WHEN (b.TYPE = 1 or b.TYPE = 2) THEN CONCAT(g.FIRST_NAME, \' \', g.KEY_NAME)	WHEN (b.TYPE = 3) THEN g.KEY_NAME END as Name,	FORMAT(b.POST_DATE, \'MM/dd/yyyy\') as PostDate, Format(Convert(datetime, b.CHECK_DATE),\'MM/dd/yyyy\') as CheckDate, b.CHECK_NUMBER, FORMAT(b.DTE, \'MM/dd/yyyy\') as GiftDate, b.BATCH_NUMBER, h.LONGDESCRIPTION as FundCategory ' + 
-    'from RECORDS a join GIFT b on a.id = b.CONSTIT_ID join GiftSplit c on b.id = c.GiftId join FUND d on c.FundId = d.ID join CAMPAIGN e on c.CampaignId = e.ID join APPEAL f on c.AppealId = f.ID join CONSTITUENT g on a.id = g.RECORDS_ID join TABLEENTRIES h on d.FUND_CATEGORY = h.TABLEENTRIESID ' + 
-    'where (b.TYPE = 1 or b.TYPE = 2 or b.TYPE = 3) AND (e.DESCRIPTION LIKE \'Work for Art 201%\') AND (b.POST_DATE = \'2018-7-30\') and (g.SEQUENCE = 0) and (g.spouse_id is null) order by Campaign, Fund, Appeal, GiftDate')
+
+postdate = '2018-7-30'
+sqlcommand = 'exec sp_checkdetailreport ''?'''
+sqlparams = (postdate)
+cursor.execute(sqlcommand,sqlparams)
+rc = cursor.fetchval()
 
 columns = [column[0] for column in cursor.description]
 print(columns)
