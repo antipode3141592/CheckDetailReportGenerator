@@ -56,59 +56,6 @@ def writeYTDsummary_appealfund(ws,r,i,row,width):
     r+=1
     return r, width
 
-#def writeFundCat(ws,r,i,row,width):
-#    if len(str(i)) > width[0]:
-#        width[0] = len(str(i))
-#    if len(str(row.values[0])) > width[1]:
-#        width[1] = len(str(row.values[0]))
-#    ws.write(r,0,i)
-#    ws.write(r,1,row.values[0],fmt_money)
-#    r+=1
-#    return r, width
-
-def writedetailrow(ws,r,row,width):
-    #didn't use a loop for the comparisons because some columns don't need resizing
-    if len(str(row['FundCategory'])) > width[0]:
-        width[0] = len(str(row['FundCategory']))
-    if len(str(row['Appeal'])) > width[1]:
-        width[1] = len(str(row['Appeal']))
-    if len(str(row['Fund'])) > width[2]:
-        width[2] = len(str(row['Fund']))
-    if len(str(row['Name'])) > width[3]:
-        width[3] = len(str(row['Name']))
-    if len(str(row['Reference'])) > width[4]:
-        width[4] = len(str(row['Reference']))
-    if len(str(row['SplitAmount'])) > width[5]:
-        width[5] = len(str(row['SplitAmount']))
-    if len(str(row['GiftID'])) > width[6]:
-        width[6] = len(str(row['GiftID']))
-    if len(str(row['GiftDate'])) > width[7]:
-        width[7] = len(str(row['GiftDate']))
-    if len(str(row['GiftType'])) > width[8]:
-        width[8] = len(str(row['GiftType']))
-    ws.write(r,0,row['FundCategory'])
-    ws.write(r,1,row['Appeal'])
-    ws.write(r,2,row['Fund'])
-    ws.write(r,3,row['Name'])
-    ws.write(r,4,row['Reference'])
-    ws.write(r,5,row['SplitAmount'], fmt_money)
-    ws.write(r,6,row['GiftID'])
-    ws.write(r,7,row['GiftDate'],fmt_date)
-    ws.write(r,8,row['GiftType'])
-    r+=1
-    return r, width
-
-def writetotal(ws,fmt,r,row_1st,row_last):
-    ws.write(r,0,"Total",fmt)
-    ws.write(r,1,"", fmt)
-    ws.write(r,2,"", fmt)
-    ws.write(r,3,"", fmt)
-    ws.write(r,4,"", fmt)
-    ws.write(r,5,"", fmt)
-    formula = "=SUBTOTAL(109,{:s})".format(xl_range(row_1st,5,row_last,5))
-    ws.write_formula(xl_rowcol_to_cell(r,5), formula, fmt)
-    return
-
 def sterilizestring (s):
     for char in "?.!/;:":
         s = s.replace(char,'_');
