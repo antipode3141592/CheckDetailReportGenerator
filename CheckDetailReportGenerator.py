@@ -108,11 +108,12 @@ cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};" #requires explic
                       "Trusted_Connection=yes;")    #use windows integrated security
 cursor = cnxn.cursor()
 
-postdate = '2018-7-30'
+postdate = '2018-08-06'
 sqlcommand = 'exec sp_checkdetailreport ''?'''
 sqlparams = (postdate)
 cursor.execute(sqlcommand,sqlparams)
-rc = cursor.fetchval()
+#rc = cursor.fetchval()
+#print(rc)
 
 columns = [column[0] for column in cursor.description]
 print(columns)
