@@ -179,7 +179,8 @@ with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
             r, widths = writeYTDsummary_appeal(ws,r, j, datarow, widths)
         ws.set_column(0,0,widths[0])
         ws.set_column(1,1,widths[1])
-
+       
+    #final worksheet, details of everything
     ws = wb.add_worksheet("Details")
     ws.set_landscape()
     ws.fit_to_pages(1,0)    #printing is 1 page wide, no limit on height/length

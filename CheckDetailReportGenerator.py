@@ -36,10 +36,10 @@ import pyodbc
 import os
 import numpy as np
 
-# GUI tools
-from traits.api import HasTraits, Str, Int
-from traitsui.api import View, Item
-from traitsui.menu import OKButton, CancelButton
+## GUI tools
+#from traits.api import HasTraits, Str, Int
+#from traitsui.api import View, Item
+#from traitsui.menu import OKButton, CancelButton
 
 # define those functions!
 def writedetailrow(ws,r,row,width):
@@ -108,7 +108,7 @@ cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};" #requires explic
                       "Trusted_Connection=yes;")    #use windows integrated security
 cursor = cnxn.cursor()
 
-postdate = '2018-08-06'
+postdate = '2018-08-15'
 sqlcommand = 'exec sp_checkdetailreport ''?'''
 sqlparams = (postdate)
 cursor.execute(sqlcommand,sqlparams)
