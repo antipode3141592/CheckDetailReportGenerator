@@ -60,9 +60,6 @@ def writerow(ws,r,i,row,width):
     return r, width
 
 def writeevalrow(ws,r,i,row,width):
-    #print(row)
-    #print(i)
-    #print(type(row))
     if len(str(i[1])) > width[0]:
         width[0] = len(str(i[1]))
     ws.write(r,0,i[1])
@@ -76,20 +73,18 @@ def writeevalrow(ws,r,i,row,width):
 
 def writemergerow(ws,r,k,df,width,total):
     #columns: ['FUND_ID', 'ORG_NAME', 'Category', 'ADDRESS_BLOCK', 'CITY', 'STATE', 'POST_CODE']
-    #print(df.columns)
-    print(k)
-    address = df.loc[k][2]
-    city = df.loc[k][3]
-    state = df.loc[k][4]
-    zipcode = df.loc[k][5]
+    address = df.loc[k[0]][2]
+    city = df.loc[k[0]][3]
+    state = df.loc[k[0]][4]
+    zipcode = df.loc[k[0]][5]
     citystatezip = "%s, %s %s" %(str(city), str(state), str(zipcode))
-    #if len(str(row['ORG_NAME'])) > width[0]:
-    #    width[0] = len(str(row['ORG_NAME']))
-    #if len(str(row['ADDRESS_BLOCK'])) > width[2]:
-    #    width[2] = len(str(row['ADDRESS_BLOCK']))
-    #if len(str(citystatezip)) > width[3]:
-    #    width[3] = len(str(citystatezip))
-    ws.write(r,0,k)
+    if len(str(k[1])) > width[0]:
+        width[0] = len(str(k[1]))
+    if len(str(address)) > width[2]:
+        width[2] = len(str(address))
+    if len(str(citystatezip)) > width[3]:
+        width[3] = len(str(citystatezip))
+    ws.write(r,0,k[1])
     ws.write(r,1,total,fmt_money)
     ws.write(r,2,address)
     ws.write(r,3,citystatezip)
@@ -245,10 +240,7 @@ with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     _df2 = df2.set_index('FUND_ID')
     for k, row in sumsoffunds.iterrows():
         if ((k[0] in _df2.index) & (row['SplitAmount'] >= 20)):
-            print("match!")
-            r, widths = writemergerow(ws,r,k[0],_df2,widths,row['SplitAmount'])
-        else:
-            print("no match!")
+            r, widths = writemergerow(ws,r,k,_df2,widths,row['SplitAmount'])
     ws.set_column(0,0,widths[0])
     ws.set_column(1,1,widths[1])
     ws.set_column(2,2,widths[2])
