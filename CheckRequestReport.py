@@ -124,7 +124,8 @@ for row in cursor:
 df2 = pd.DataFrame.from_records(np.array(data),columns=columns)
 
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
-fl = filepath + "_test_Check Request - Quarter end 6.30.2018.xlsx"
+outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\Outgoing\\"
+fl = filepath + "Check Request - Quarter end 6.30.2018.xlsx"
 
 with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     #define formats
@@ -194,10 +195,10 @@ with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     widths = [10,10,10,10,10,10,10]
     widths_hold = [10,10,10,10,10,10,10]
     for k, row in df.iterrows():
-        if sumsoffunds['SplitAmount'][row['FUND_ID']].values[0] >= 20:
-            r, widths = writerow(ws,r,k,row,widths)
-        else:
-            r_hold, widths = writerow(ws_hold,r_hold,k,row,widths)
+        #if sumsoffunds['SplitAmount'][row['FUND_ID']].values[0] >= 20:
+        r, widths = writerow(ws,r,k,row,widths)
+        #else:
+        #    r_hold, widths = writerow(ws_hold,r_hold,k,row,widths)
     ws.set_column(0,0,widths[0])
     ws.set_column(1,1,widths[1])
     ws.set_column(2,2,widths[2])
@@ -239,8 +240,8 @@ with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     #columns:  ['FUND_ID', 'ORG_NAME', 'Category', 'ADDRESS_BLOCK', 'CITY', 'STATE', 'POST_CODE']
     _df2 = df2.set_index('FUND_ID')
     for k, row in sumsoffunds.iterrows():
-        if ((k[0] in _df2.index) & (row['SplitAmount'] >= 20)):
-            r, widths = writemergerow(ws,r,k,_df2,widths,row['SplitAmount'])
+        #if ((k[0] in _df2.index) & (row['SplitAmount'] >= 20)):
+        r, widths = writemergerow(ws,r,k,_df2,widths,row['SplitAmount'])
     ws.set_column(0,0,widths[0])
     ws.set_column(1,1,widths[1])
     ws.set_column(2,2,widths[2])
@@ -250,4 +251,47 @@ with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     ws_hold.set_column(2,2,widths[2])
     ws_hold.set_column(3,3,widths[3])
 
+df3 = df.groupby('FUND_ID')
+for group, data in _df2:
+    #if sumsoffunds['SplitAmount'][row['FUND_ID']].values[0] >= 20:    
+    print(group)
+    #print(rows['Fund'])
+    fl2 = outputpath + group + ".xlsx"
+    with xlsxwriter.Workbook(fl2, {'nan_inf_to_errors': True}) as wb:
+        #-------------------------------------------------------------------
+        #Check Request Worksheet and Hold Worksheet
+        # currently, Check Request sheet must have one last manual step, selecting the whole table (data + headers) and then Data->Subtotal sum by Fund Split Amount
+        # 
+        header1 = "&LWFA Designated Gift Check Request" + "&CIncludes gifts with dates between " + startdate + " and " + enddate
+        footer1 = "&LCoding: 01-5210-Other-280-0-0-0" + "&RApproved as per WFA Designated Gifts for April thru June 2018"
+        ws = wb.add_worksheet("Gift Payments");
+        ws.set_header(header1)
+        ws.set_footer(footer1)
+        ws.hide_gridlines(0)
+        ws.set_landscape()
+        ws.fit_to_pages(1,0)    #printing is 1 page wide, no limit on height/length
+    
+        startingdatarow = 1     #indicates which row to start writing data to
+        ws.repeat_rows(startingdatarow-1) #repeats header row on each page for printing (r-1 because it uses excel row numbers, not 0-index rows)
+        #write header
+        ws.write(startingdatarow-1,0,'Fund',fmt_dataheader)
+        ws.write(startingdatarow-1,1,'Fund Address',fmt_dataheader)
+        ws.write(startingdatarow-1,2,'Appeal ID',fmt_dataheader)
+        ws.write(startingdatarow-1,3,'Gift Date',fmt_dataheader)
+        ws.write(startingdatarow-1,4,'Name',fmt_dataheader)
+        ws.write(startingdatarow-1,5,'Reference',fmt_dataheader)
+        ws.write(startingdatarow-1,6,'Fund Split Amount',fmt_dataheader)
+        r = startingdatarow
+        r_hold = startingdatarow
+        widths = [10,10,10,10,10,10,10]
+        widths_hold = [10,10,10,10,10,10,10]
+        for row in data:
+            r, widths = writerow(ws,r,group,row,widths)
+        ws.set_column(0,0,widths[0])
+        ws.set_column(1,1,widths[1])
+        ws.set_column(2,2,widths[2])
+        ws.set_column(3,3,widths[3])
+        ws.set_column(4,4,widths[4])
+        ws.set_column(5,5,widths[5])
+        ws.set_column(6,6,widths[6])
 print("Done!")

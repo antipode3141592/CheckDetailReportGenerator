@@ -90,7 +90,8 @@ def write_totalrow(r,_r,ws):
 #outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\17-18\\"
 
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
-outputpath = "\\\\CONCORDIA\\lancentral\\Work for Art\\Raisers Edge Reports\\Pledge reports\\17-18\\"
+#outputpath = "\\\\CONCORDIA\\lancentral\\Work for Art\\Raisers Edge Reports\\Pledge reports\\17-18\\"
+outputpath = filepath
 
 inputfile = "PLEDGE_R.XLSX"
 if os.path.exists(filepath + inputfile):
@@ -99,8 +100,7 @@ else:
     print("no input file!")
 xl = pd.ExcelFile(filepath + inputfile) #use pandas' excel reader
 #   columns of import sheet
-#   ['Gift Type','Fund Category','Gift Pledge Balance','Fund Category','Fund ID','Constituent ID',
-#       'Name','Appeal ID','Gift Reference','Gift Date','Fund Description','Gift ID','Fund Split Amount']
+#   ['Gift Type','Fund Category','Gift Pledge Balance','Fund ID','Constituent ID','Name','Gift Reference','Appeal ID','Gift Date','Fund Description','Gift ID','Fund Split Amount']
 
 df = xl.parse()
 df = df.replace(pd.np.nan, '', regex=True)  #replaces all types of NAN entries with blank space
@@ -115,7 +115,7 @@ fill_header2 = PatternFill(fill_type="solid",fgColor=Color(rgb="00434343"))
 
 for name1, group1 in groupedby_Appeal:
     #try opening file, replacing '/' with '-' to satisfy file naming rules
-    fp = outputpath + str(name1).replace("/","-") + ".xlsx"
+    fp = outputpath +  "_" + str(name1).replace("/","-") + ".xlsx"
     fp2 = outputpath + "Test\\" + str(name1).replace("/","-") + "_test.xlsx"
     #check if [Appeal ID].xlsx exists
     if os.path.exists(fp):

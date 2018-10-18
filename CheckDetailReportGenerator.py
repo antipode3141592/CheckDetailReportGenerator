@@ -1,17 +1,17 @@
 #   XLSX Report Generator
 #   Copyright 2018 by Sean Vo Kirkpatrick using GNU GPL v3
-#   skirkpatrick@racc.org or sean@studioantipode.com or seanvokirkpatrick@gmail.com
+#   skirkpatrick@racc.org or seanvokirkpatrick@gmail.com
 #   
 #   Creates a formatted Excel .xlsx summary report with subtotals, data pulled from Raiser's Edge DB directly
 #       using parameterized stored procedure
 #   Input:  a date variable
 #   Output: a bunch of reports
 #
-#   Tested using    - Anaconda 5.0.0
-#                   - pandas 0.22.0
-#                   - XlsxWriter 1.0.2
+#   Tested using    - Anaconda 5.2.0
+#                   - pandas 0.23.0
+#                   - XlsxWriter 1.0.4
 #                   - pyodbc 4.0.23
-#                   - numpy 1.14.5
+#                   - numpy 1.15.2
 #   IDE: Visual Studio 2017 Community Edition
 
 # License Info:
@@ -36,11 +36,14 @@ import pyodbc
 import os
 import numpy as np
 
-## GUI tools
-#from traits.api import HasTraits, Str, Int
-#from traitsui.api import View, Item
-#from traitsui.menu import OKButton, CancelButton
+#-------------------------------------------------------------------------------
+# Input:  Select the date range (for Gift Date) that you wish to create reports for
+startdate = '2018-08-31'         
+enddate = '2018-08-31'          
+filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"  #output path for the generated files
+#-------------------------------------------------------------------------------
 
+#------------------------------------------------------------------------------------------------------
 # define those functions!
 def writedetailrow(ws,r,row,width):
     #didn't use a loop for the comparisons because some columns don't need resizing
@@ -96,55 +99,33 @@ def writetotal(ws,fmt,r,row_1st,row_last):
     ws.write_formula(xl_rowcol_to_cell(r,6), formula, fmt)
     return
 
+# replaces restricted system characters with underscores
 def sterilizestring (s):
     s = str(s)
     for char in "?.!/;:":
         s = s.replace(char,'_');
     return s
+#------------------------------------------------------------------------------------------------------
 
+#connect to db, requires windows integrated security for this connection string
 cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};" #requires explicitily stating the sql driver
                       "Server=overlook;"
                       "Database=re_racc;"
                       "Trusted_Connection=yes;")    #use windows integrated security
 cursor = cnxn.cursor()
 
-postdate = '2018-08-15'
-sqlcommand = 'exec sp_checkdetailreport ''?'''
-sqlparams = (postdate)
+sqlcommand = 'exec sp_checkdetailreport ''?'', ''?'' '  #call stored procedure
+sqlparams = (startdate,enddate)
 cursor.execute(sqlcommand,sqlparams)
-#rc = cursor.fetchval()
-#print(rc)
-
 columns = [column[0] for column in cursor.description]
-print(columns)
+
 data = []   #grab results, put into a list, put list into numpy array, and then put numpy array into pandas dataframe
 for row in cursor:
     data.append(tuple(row))
     #print(row)
 df = pd.DataFrame.from_records(np.array(data),columns=columns)
-print(df.shape)
+print("Query results count(rows): " + str(df.shape[0]))
 
-#class MainWindow(HasTraits):
-#    view1 = View(resizable=True,
-#             height=0.5, width = 0.5,
-#             buttons = [OKButton, CancelButton])
-
-#class SQLData(HasTraits):
-#    sqlview = View()
-
-#MainWindow().configure_traits()
-
-#filepath = "C:\\Users\\Antipode\\Documents\\Python Scripting\\"
-filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
-#inputfile = "CHECK_DE.XLSX"
-#xl = pd.ExcelFile(filepath + inputfile) #use pandas' excel reader
-##   columns of import sheet
-##   ['Gift Batch Number', 'Gift Check Number', 'Check Date', 'Fund Category', 'Name', 
-##       'Gift Reference', 'Appeal ID', 'Gift Date', 'Fund Description', 'Gift ID', 'Fund Split Amount']
-#df = xl.parse()
-#df = df.replace(pd.np.nan, '', regex=True)  #replaces all types of NAN entries with blank space
-#xl.close()
-#groupedby_Batch = df.groupby('Gift Batch Number')
 groupedby_Batch = df.groupby('BATCH_NUMBER')
 for name1, group1 in groupedby_Batch:
     #if group1.iloc[0,1] != "":
