@@ -93,6 +93,8 @@ filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
 #outputpath = "\\\\CONCORDIA\\lancentral\\Work for Art\\Raisers Edge Reports\\Pledge reports\\17-18\\"
 outputpath = filepath
 
+# the RE Query is in the Sean K folder and named Pledge Report Query
+# set up the query 
 inputfile = "PLEDGE_R.XLSX"
 if os.path.exists(filepath + inputfile):
     print(filepath + inputfile)
@@ -116,7 +118,7 @@ fill_header2 = PatternFill(fill_type="solid",fgColor=Color(rgb="00434343"))
 for name1, group1 in groupedby_Appeal:
     #try opening file, replacing '/' with '-' to satisfy file naming rules
     fp = outputpath +  "_" + str(name1).replace("/","-") + ".xlsx"
-    fp2 = outputpath + "Test\\" + str(name1).replace("/","-") + "_test.xlsx"
+    #fp2 = outputpath + "Test\\" + str(name1).replace("/","-") + "_test.xlsx"
     #check if [Appeal ID].xlsx exists
     if os.path.exists(fp):
         print("{0} exists!".format(name1))

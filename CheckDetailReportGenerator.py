@@ -38,8 +38,8 @@ import numpy as np
 
 #-------------------------------------------------------------------------------
 # Input:  Select the date range (for Gift Date) that you wish to create reports for
-startdate = '2018-08-31'         
-enddate = '2018-08-31'          
+startdate = '2018-10-19'         
+enddate = '2018-10-19'          
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"  #output path for the generated files
 #-------------------------------------------------------------------------------
 
@@ -115,6 +115,8 @@ cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};" #requires explic
 cursor = cnxn.cursor()
 
 sqlcommand = 'exec sp_checkdetailreport ''?'', ''?'' '  #call stored procedure
+#note that the FundCategory sorting is done in the stored procudure.  the order is:
+# ["Designated", "Arts Ed", "Right Brain", "RACC", "Community", "Holding", "Undesignated"]
 sqlparams = (startdate,enddate)
 cursor.execute(sqlcommand,sqlparams)
 columns = [column[0] for column in cursor.description]
@@ -176,7 +178,7 @@ for name1, group1 in groupedby_Batch:
         ws.write(0,5,'Subtotals',fmt_dataheader)
         ws.write(0,6,'Totals',fmt_dataheader)
         #summed = group1.groupby(['Fund Category', 'Appeal ID'])
-        group_category = group1.groupby('FundCategory')
+        group_category = group1.groupby('FundCategory', sort=False)
         for n1,g1 in group_category:
             ws.write(r,3,n1)
             group_appeal = g1.groupby('Appeal')
@@ -200,7 +202,7 @@ for name1, group1 in groupedby_Batch:
         ws.write(startingdatarow-1,6,'Amount',fmt_dataheader)
         r = startingdatarow   #row counter
         row_subtotals = 1
-        subgroup = group1.groupby('FundCategory')
+        subgroup = group1.groupby('FundCategory',sort=False)
         #initialize length counters for column width
         column_widths = [19,10,10,11,20,8,10]
         for name2, group2 in subgroup:
