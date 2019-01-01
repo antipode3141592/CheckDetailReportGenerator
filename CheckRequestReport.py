@@ -103,11 +103,14 @@ cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};" #requires explic
                       "Database=re_racc;"
                       "Trusted_Connection=yes;")    #use windows integrated security
 cursor = cnxn.cursor()
-startdate = '2018-04-01'
-enddate = '2018-06-30'
+
+startdate = '2018-07-01'
+enddate = '2018-11-30'
+
 sqlcommand = 'exec sp_GiftReconwithAddress ''?'', ''?'''
 sqlcommand2 = 'exec sp_OrgswithAddresses'
 sqlparams = (startdate,enddate)
+
 cursor.execute(sqlcommand,sqlparams)
 columns = [column[0] for column in cursor.description]
 #['Campaign', 'Fund', 'Fund ID', 'Fund Address', 'Fund City', 'Fund State', 'Fund Zip', 'Appeal', 'GiftID', 'RECORDS_ID', 'Type', 'GiftType', 'TotalAmount', 'SplitAmount', 'AnonRecord', 'AnonGift', 'CONSTITUENT_ID', 'FIRST_NAME', 'KEY_NAME', 'Ref', 'Name', 'Reference', 'POST_DATE', 'CHECK_DATE', 'CHECK_NUMBER', 'GiftDate', 'BATCH_NUMBER', 'FundCategory', 'MGConstituentID']
@@ -116,6 +119,7 @@ data = []   #grab results, put into a list, put list into numpy array, and then 
 for row in cursor:
     data.append(tuple(row))
 df = pd.DataFrame.from_records(np.array(data),columns=columns)
+
 cursor.execute(sqlcommand2)
 columns = [column[0] for column in cursor.description]
 data = []
@@ -125,7 +129,7 @@ df2 = pd.DataFrame.from_records(np.array(data),columns=columns)
 
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
 outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\Outgoing\\"
-fl = filepath + "Check Request - Quarter end 6.30.2018.xlsx"
+fl = filepath + "Check Request - Quarter end 11.30.2018.xlsx"
 
 with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     #define formats
@@ -220,7 +224,7 @@ with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     # currently, Check Request sheet must have one last manual step, selecting the whole table (data + headers) and then Data->Subtotal sum by Fund Split Amount
     # 
     header1 = "&LWFA Designated Gift Check Request" + "&CIncludes gifts with dates between " + startdate + " and " + enddate
-    footer1 = "&LCoding: 01-5210-Other-280-0-0-0" + "&RApproved as per WFA Designated Gifts for April thru June 2018"
+    footer1 = "&LCoding: 01-5210-Other-280-0-0-0" + "&RApproved as per WFA Designated Gifts for July thru November 2018"
     ws = wb.add_worksheet("Mail Merge");
     ws.set_header(header1)
     ws.set_footer(footer1)
@@ -263,7 +267,7 @@ for group, data in _df2:
         # currently, Check Request sheet must have one last manual step, selecting the whole table (data + headers) and then Data->Subtotal sum by Fund Split Amount
         # 
         header1 = "&LWFA Designated Gift Check Request" + "&CIncludes gifts with dates between " + startdate + " and " + enddate
-        footer1 = "&LCoding: 01-5210-Other-280-0-0-0" + "&RApproved as per WFA Designated Gifts for April thru June 2018"
+        footer1 = "&LCoding: 01-5210-Other-280-0-0-0" + "&RApproved as per WFA Designated Gifts for July thru November 2018"
         ws = wb.add_worksheet("Gift Payments");
         ws.set_header(header1)
         ws.set_footer(footer1)

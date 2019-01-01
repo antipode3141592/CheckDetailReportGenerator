@@ -1,8 +1,14 @@
-#   XLSX Report Generator
+#   DG Recon Report Maker
 #   Copyright 2018 by Sean Vo Kirkpatrick using GNU GPL v3
 #   skirkpatrick@racc.org or sean@studioantipode.com or seanvokirkpatrick@gmail.com
 #   
-#   Creates a formatted Excel .xlsx summary report with subtotals from each batch in an input file
+#   Creates the initial Designated Giving Recon report, summarizing all payments received within a given date range
+#       (usually one quarter year)
+#       - YTD Sums by Appeal
+#       - YTD Sums by Appeal with Fund
+#       - One tab for each category (Arts Ed, Community Fund, Designated, Holding, RACC, Right Brain)
+#           Sums by appeal, within each category
+#       - Details tab with raw gift data for the date range
 #
 #   Tested using    - Anaconda 5.0.0
 #                   - pandas 0.22.0
@@ -98,8 +104,8 @@ cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};" #requires explic
                       "Database=re_racc;"
                       "Trusted_Connection=yes;")    #use windows integrated security
 cursor = cnxn.cursor()
-startdate = '2017-07-01'
-enddate = '2018-06-30'
+startdate = '2018-07-01'
+enddate = '2018-11-30'
 sqlcommand = 'exec sp_giftreconreport ''?'', ''?'''
 sqlparams = (startdate,enddate)
 cursor.execute(sqlcommand,sqlparams)
@@ -113,7 +119,7 @@ df = pd.DataFrame.from_records(np.array(data),columns=columns)
 #print(df.shape)
 
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
-fl = filepath + "RE YTD Cash Receipts thru 6.30.2018.xlsx"
+fl = filepath + "RE YTD Cash Receipts thru 9.30.2018.xlsx"
 with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     fmt_money = wb.add_format({'num_format': '$#,##0.00'})
     fmt_date = wb.add_format({'num_format': 'mm/dd/yyyy'})

@@ -29,13 +29,16 @@ from openpyxl.worksheet.header_footer import HeaderFooterItem
 from openpyxl.worksheet.header_footer import HeaderFooter
 import os
 import pandas as pd
+import pyodbc
 import openpyxl
 from openpyxl.reader.excel import load_workbook
 from openpyxl.styles import Border, Side, Alignment, Protection, Font, Color, PatternFill
 from openpyxl.styles.numbers import FORMAT_CURRENCY_USD_SIMPLE
-from openpyxl.styles.numbers import FORMAT_DATE_XLSX14
+#from openpyxl.styles.numbers import FORMAT_DATE_XLSX14
+from openpyxl.styles.numbers import FORMAT_DATE_YYYYMMDD2
 from openpyxl.utils.cell import get_column_letter
 from openpyxl import Workbook
+import numpy as np
 
 def format_range(r1,c1,r2,c2,**options):
     for column in range(c1,c2+1):
@@ -51,14 +54,14 @@ def format_range(r1,c1,r2,c2,**options):
 
 def write_detailrow(r,row,ws,column_widths):
     
-    ws.cell(row=r,column=1,value="{0}".format(row[6]))          #Name
-    ws.cell(row=r,column=2,value="{0}".format(row[7]))          #Reference
-    ws.cell(row=r,column=3,value="{0}".format(row[8]))          #Appeal ID
-    ws.cell(row=r,column=4,value="{0}".format(row[9].strftime("%m/%d/%y"))) #Date
-    ws.cell(row=r,column=5,value="{0}".format(row[10]))         #Fund (description)
-    ws.cell(row=r,column=6,value="{0}".format(row[11]))         #Gift ID (from Raiser's Edge)
-    _a = ws.cell(row=r,column=7,value="={0}".format(row[12]))   #Amount
-    _a.number_format = FORMAT_CURRENCY_USD_SIMPLE
+    ws.cell(row=r,column=1,value="{0}".format(row[7]))          #Name
+    ws.cell(row=r,column=2,value="{0}".format(row[11]))          #Reference
+    ws.cell(row=r,column=3,value="{0}".format(row[3]))          #Appeal ID
+    ws.cell(row=r,column=4,value="{0}".format(row[18]))         #Date
+    ws.cell(row=r,column=5,value="{0}".format(row[2]))         #Fund (description)
+    ws.cell(row=r,column=6,value="{0}".format(row[5]))         #Gift ID (from Raiser's Edge)
+    _a = ws.cell(row=r,column=7,value="={0}".format(row[4]))   #Amount
+    _a.number_format = FORMAT_CURRENCY_USD_SIMPLE   #set formatting to USD currency standard
     for i in range(1,8):
         if len(ws.cell(row=r,column=i).value) > column_widths[i-1]:
             column_widths[i-1] = len(ws.cell(row=r,column=i).value)
@@ -86,27 +89,42 @@ def write_totalrow(r,_r,ws):
     r+=1
     return(r)
 
-#filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
-#outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\17-18\\"
+
+#-------------------------------------------------------------------------------
+# Input:  Select the date range (for Gift Date) that you wish to create reports for
+startdate = '2018-12-05'         
+enddate = '2018-12-31'
+#-------------------------------------------------------------------------------
+
+#database connections
+#connect to db, requires windows integrated security for this connection string
+cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};" #requires explicitily stating the sql driver
+                      "Server=overlook;"
+                      "Database=re_racc;"
+                      "Trusted_Connection=yes;")    #use windows integrated security
+cursor = cnxn.cursor()
+
+sqlcommand = 'exec sp_pledgereport ''?'', ''?'' '  #call stored procedure
+#note that the FundCategory sorting is done in the stored procudure.  the order is:
+# ["Designated", "Arts Ed", "Right Brain", "RACC", "Community", "Holding", "Undesignated"]
+sqlparams = (startdate,enddate)
+cursor.execute(sqlcommand,sqlparams)
+columns = [column[0] for column in cursor.description]
+
+data = []   #grab results, put into a list, put list into numpy array, and then put numpy array into pandas dataframe
+for row in cursor:
+    data.append(tuple(row))
+df = pd.DataFrame.from_records(np.array(data),columns=columns)
+df = df.replace(pd.np.nan, '', regex=True)  #replaces all types of NAN entries with blank space
+print("Query results count(rows): " + str(df.shape[0]))
 
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
 #outputpath = "\\\\CONCORDIA\\lancentral\\Work for Art\\Raisers Edge Reports\\Pledge reports\\17-18\\"
 outputpath = filepath
 
-# the RE Query is in the Sean K folder and named Pledge Report Query
-# set up the query 
-inputfile = "PLEDGE_R.XLSX"
-if os.path.exists(filepath + inputfile):
-    print(filepath + inputfile)
-else:
-    print("no input file!")
-xl = pd.ExcelFile(filepath + inputfile) #use pandas' excel reader
-#   columns of import sheet
-#   ['Gift Type','Fund Category','Gift Pledge Balance','Fund ID','Constituent ID','Name','Gift Reference','Appeal ID','Gift Date','Fund Description','Gift ID','Fund Split Amount']
+# columns of stored procedure:
+# Campaign,Fund,Appeal ID,Amount,GiftID,Constituent ID,Name,FIRST_NAME,KEY_NAME,LAST_NAME,Reference,PRIMARY_ADDRESSEE,PRIMARY_SALUTATION,ADDRESS_BLOCK,CITY,STATE,POST_CODE,Gift Date,Fund Category,FUND_ID
 
-df = xl.parse()
-df = df.replace(pd.np.nan, '', regex=True)  #replaces all types of NAN entries with blank space
-xl.close()
 groupedby_Appeal = df.groupby('Appeal ID')
 
 #format definitions
