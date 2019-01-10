@@ -40,6 +40,14 @@ from openpyxl.utils.cell import get_column_letter
 from openpyxl import Workbook
 import numpy as np
 
+#-------------------------------------------------------------------------------
+# Input:  Select the date range (for Gift Date) that you wish to create reports for
+startdate = '2018-12-14'         
+enddate = '2018-12-19'
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# function definitions
 def format_range(r1,c1,r2,c2,**options):
     for column in range(c1,c2+1):
         for row in range(r1,r2+1):
@@ -88,13 +96,8 @@ def write_totalrow(r,_r,ws):
         _a.fill = PatternFill(fill_type='solid',patternType='solid',fgColor=Color(rgb="00000000"))
     r+=1
     return(r)
-
-
 #-------------------------------------------------------------------------------
-# Input:  Select the date range (for Gift Date) that you wish to create reports for
-startdate = '2018-12-05'         
-enddate = '2018-12-31'
-#-------------------------------------------------------------------------------
+
 
 #database connections
 #connect to db, requires windows integrated security for this connection string
