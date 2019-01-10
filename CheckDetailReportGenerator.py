@@ -38,8 +38,8 @@ import numpy as np
 
 #-------------------------------------------------------------------------------
 # Input:  Select the date range (for Gift Date) that you wish to create reports for
-startdate = '2018-10-31'         
-enddate = '2018-10-31'         
+startdate = '2018-12-28'         
+enddate = '2018-12-28'         
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"  #output path for the generated files
 #-------------------------------------------------------------------------------
 
