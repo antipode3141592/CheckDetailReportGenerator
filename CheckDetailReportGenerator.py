@@ -31,16 +31,17 @@ import pandas as pd
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 from xlsxwriter.utility import xl_range
-import win32com.client as win32
+#import win32com.client as win32
 import pyodbc 
 import os
 import numpy as np
 
 #-------------------------------------------------------------------------------
-# Input:  Select the date range (for Gift Date) that you wish to create reports for
-startdate = '2018-11-30'         
-enddate = '2018-12-14'         
-filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"  #output path for the generated files
+# Inputs:  Select the date range (for Gift Date) that you wish to create reports for
+startdate = '2019-10-24'         #set startdate=enddate to generate reports for a single day
+enddate = '2019-10-24'          
+filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"  #local output path for the generated files
+reported_by_name = "Sean K."
 #-------------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------------------------------
@@ -137,6 +138,8 @@ for name1, group1 in groupedby_Batch:
     if (str(group1.iloc[0,17]) != "" and str(group1.iloc[0,17]) != "None") and (str(group1.iloc[0,2]) != ""):
         print("Appeal ID: " + group1.iloc[0,2] + ", Check# " + str(group1.iloc[0,19]))
         fl = filepath + "{:s}".format(sterilizestring(group1.iloc[0,2])) + " - check {:s}".format(str(group1.iloc[0,17])) + ".xlsx"
+        if (os.path.isfile(fl)):
+            fl = filepath + "{:s}".format(sterilizestring(group1.iloc[0,2])) + " - check {:s}".format(str(group1.iloc[0,17])) + " - Batch" + format(name1) + ".xlsx"
     elif (str(group1.iloc[0,17]) == "None"):
         fl = filepath + "{:s}".format(sterilizestring(group1.iloc[0,2])) + " - Batch {:s}".format(name1) + ".xlsx"
     else:
@@ -230,7 +233,7 @@ for name1, group1 in groupedby_Batch:
         ws.write(row_subtotals,5,"Total",fmt_total)
         ws.write_formula(xl_rowcol_to_cell(row_subtotals,6),formula,fmt_total)
         r+=3
-        ws.write(r,0,"Reported by Sean K. on {}".format(dt.datetime.now().strftime("%m/%d/%y")))
+        ws.write(r,0,"Reported by " + reported_by_name + " on {}".format(dt.datetime.now().strftime("%m/%d/%y")))
         ws.set_column(0,0,column_widths[0])
         ws.set_column(1,1,column_widths[1])
         ws.set_column(2,2,column_widths[2])

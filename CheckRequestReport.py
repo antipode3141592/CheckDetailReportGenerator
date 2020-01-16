@@ -34,28 +34,31 @@ import numpy as np
 
 # define those functions!
 def writerow(ws,r,i,row,width):
-    addresslines = "%s, %s, %s %s" %(str(row['Fund_Address']), str(row['Fund_City']), str(row['Fund_State']), str(row['Fund_Zip']))
-    if len(str(row['Fund'])) > width[0]:
-        width[0] = len(str(row['Fund']))
+    #print(row)
+    #print("new line:  %s"%(row.shape))
+    addresslines = "%s, %s, %s %s"%(row[3], row[4], row[5], row[6])
+    #addresslines = "%s, %s, %s %s"%(row['Fund_Address'], row['Fund_City'], row['Fund_State'], row['Fund_Zip'])
+    if len(str(row[1])) > width[0]:
+        width[0] = len(str(row[1]))
     if len(str(addresslines)) > width[1]:
         width[1] = len(str(addresslines))
-    if len(str(row['Appeal'])) > width[2]:
-        width[2] = len(str(row['Appeal']))
-    if len(str(row['GiftDate'])) > width[3]:
-        width[3] = len(str(row['GiftDate']))
-    if len(str(row['Name'])) > width[4]:
-        width[4] = len(str(row['Name']))
-    if len(str(row['Reference'])) > width[5]:
-        width[5] = len(str(row['Reference']))
-    if len(str(row['SplitAmount'])) > width[6]:
-        width[6] = len(str(row['SplitAmount']))
-    ws.write(r,0,row['Fund'])
+    if len(str(row[7])) > width[2]:
+        width[2] = len(str(row[7]))
+    if len(str(row[25])) > width[3]:
+        width[3] = len(str(row[25]))
+    if len(str(row[20])) > width[4]:
+        width[4] = len(str(row[20]))
+    if len(str(row[21])) > width[5]:
+        width[5] = len(str(row[21]))
+    if len(str(row[13])) > width[6]:
+        width[6] = len(str(row[13]))
+    ws.write(r,0,row[1])
     ws.write(r,1,addresslines)
-    ws.write(r,2,row['Appeal'])
-    ws.write(r,3,row['GiftDate'], fmt_date)
-    ws.write(r,4,row['Name'])
-    ws.write(r,5,row['Reference'])
-    ws.write(r,6,row['SplitAmount'], fmt_money)
+    ws.write(r,2,row[7])
+    ws.write(r,3,row[25], fmt_date)
+    ws.write(r,4,row[20])
+    ws.write(r,5,row[21])
+    ws.write(r,6,row[13], fmt_money)
     r+=1
     return r, width
 
@@ -104,8 +107,8 @@ cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};" #requires explic
                       "Trusted_Connection=yes;")    #use windows integrated security
 cursor = cnxn.cursor()
 
-startdate = '2018-07-01'
-enddate = '2018-11-30'
+startdate = '2018-11-16'
+enddate = '2018-11-16'
 
 sqlcommand = 'exec sp_GiftReconwithAddress ''?'', ''?'''
 sqlcommand2 = 'exec sp_OrgswithAddresses'
@@ -129,7 +132,7 @@ df2 = pd.DataFrame.from_records(np.array(data),columns=columns)
 
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
 outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\Outgoing\\"
-fl = filepath + "_Check Request - Quarter end 11.30.2018.xlsx"
+fl = filepath + "Check Request rev - Quarter end 02.28.2019.xlsx"
 
 with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     #define formats
@@ -166,7 +169,7 @@ with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     # currently, Check Request sheet must have one last manual step, selecting the whole table (data + headers) and then Data->Subtotal sum by Fund Split Amount
     # 
     header1 = "&LWFA Designated Gift Check Request" + "&CIncludes gifts with dates between " + startdate + " and " + enddate
-    footer1 = "&LCoding: 01-5210-Other-280-0-0-0" + "&RApproved as per WFA Designated Gifts for April thru June 2018"
+    footer1 = "&LCoding: 01-5210-Other-280-0-0-0" + "&RApproved as per WFA Designated Gifts for July 2018 thru February 2019"
     ws = wb.add_worksheet("Check Request");
     ws.set_header(header1)
     ws.set_footer(footer1)
@@ -199,10 +202,10 @@ with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     widths = [10,10,10,10,10,10,10]
     widths_hold = [10,10,10,10,10,10,10]
     for k, row in df.iterrows():
-        #if sumsoffunds['SplitAmount'][row['FUND_ID']].values[0] >= 20:
-        r, widths = writerow(ws,r,k,row,widths)
-        #else:
-        #    r_hold, widths = writerow(ws_hold,r_hold,k,row,widths)
+        if sumsoffunds['SplitAmount'][row['FUND_ID']].values[0] >= 20:
+            r, widths = writerow(ws,r,k,row,widths)
+        else:
+            r_hold, widths = writerow(ws_hold,r_hold,k,row,widths)
     ws.set_column(0,0,widths[0])
     ws.set_column(1,1,widths[1])
     ws.set_column(2,2,widths[2])
@@ -244,8 +247,8 @@ with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     #columns:  ['FUND_ID', 'ORG_NAME', 'Category', 'ADDRESS_BLOCK', 'CITY', 'STATE', 'POST_CODE']
     _df2 = df2.set_index('FUND_ID')
     for k, row in sumsoffunds.iterrows():
-        #if ((k[0] in _df2.index) & (row['SplitAmount'] >= 20)):
-        r, widths = writemergerow(ws,r,k,_df2,widths,row['SplitAmount'])
+        if ((k[0] in _df2.index) & (row['SplitAmount'] >= 20)):
+            r, widths = writemergerow(ws,r,k,_df2,widths,row['SplitAmount'])
     ws.set_column(0,0,widths[0])
     ws.set_column(1,1,widths[1])
     ws.set_column(2,2,widths[2])
@@ -255,47 +258,47 @@ with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     ws_hold.set_column(2,2,widths[2])
     ws_hold.set_column(3,3,widths[3])
 
-df3 = df.groupby('FUND_ID')
-for group, data in df3:
-    #if sumsoffunds['SplitAmount'][row['FUND_ID']].values[0] >= 20:    
-    print(group)
-    #print(rows['Fund'])
-    fl2 = outputpath + group + ".xlsx"
-    with xlsxwriter.Workbook(fl2, {'nan_inf_to_errors': True}) as wb:
-        #-------------------------------------------------------------------
-        #Check Request Worksheet and Hold Worksheet
-        # currently, Check Request sheet must have one last manual step, selecting the whole table (data + headers) and then Data->Subtotal sum by Fund Split Amount
-        # 
-        header1 = "&LWFA Designated Gift Check Request" + "&CIncludes gifts with dates between " + startdate + " and " + enddate
-        footer1 = "&LCoding: 01-5210-Other-280-0-0-0" + "&RApproved as per WFA Designated Gifts for July thru November 2018"
-        ws = wb.add_worksheet("Gift Payments");
-        ws.set_header(header1)
-        ws.set_footer(footer1)
-        ws.hide_gridlines(0)
-        ws.set_landscape()
-        ws.fit_to_pages(1,0)    #printing is 1 page wide, no limit on height/length
+#df3 = df.groupby('FUND_ID')
+#for group, data in df3:
+#    #if sumsoffunds['SplitAmount'][row['FUND_ID']].values[0] >= 20:    
+#    print(group)
+#    #print(rows['Fund'])
+#    fl2 = outputpath + group + ".xlsx"
+#    with xlsxwriter.Workbook(fl2, {'nan_inf_to_errors': True}) as wb:
+#        #-------------------------------------------------------------------
+#        #Check Request Worksheet and Hold Worksheet
+#        # currently, Check Request sheet must have one last manual step, selecting the whole table (data + headers) and then Data->Subtotal sum by Fund Split Amount
+#        # 
+#        header1 = "&LWFA Designated Gift Check Request" + "&CIncludes gifts with dates between " + startdate + " and " + enddate
+#        footer1 = "&LCoding: 01-5210-Other-280-0-0-0" + "&RApproved as per WFA Designated Gifts for July thru November 2018"
+#        ws = wb.add_worksheet("Gift Payments");
+#        ws.set_header(header1)
+#        ws.set_footer(footer1)
+#        ws.hide_gridlines(0)
+#        ws.set_landscape()
+#        ws.fit_to_pages(1,0)    #printing is 1 page wide, no limit on height/length
     
-        startingdatarow = 1     #indicates which row to start writing data to
-        ws.repeat_rows(startingdatarow-1) #repeats header row on each page for printing (r-1 because it uses excel row numbers, not 0-index rows)
-        #write header
-        ws.write(startingdatarow-1,0,'Fund',fmt_dataheader)
-        ws.write(startingdatarow-1,1,'Fund Address',fmt_dataheader)
-        ws.write(startingdatarow-1,2,'Appeal ID',fmt_dataheader)
-        ws.write(startingdatarow-1,3,'Gift Date',fmt_dataheader)
-        ws.write(startingdatarow-1,4,'Name',fmt_dataheader)
-        ws.write(startingdatarow-1,5,'Reference',fmt_dataheader)
-        ws.write(startingdatarow-1,6,'Fund Split Amount',fmt_dataheader)
-        r = startingdatarow
-        r_hold = startingdatarow
-        widths = [10,10,10,10,10,10,10]
-        widths_hold = [10,10,10,10,10,10,10]
-        for row in data:
-            r, widths = writerow(ws,r,group,row,widths)
-        ws.set_column(0,0,widths[0])
-        ws.set_column(1,1,widths[1])
-        ws.set_column(2,2,widths[2])
-        ws.set_column(3,3,widths[3])
-        ws.set_column(4,4,widths[4])
-        ws.set_column(5,5,widths[5])
-        ws.set_column(6,6,widths[6])
+#        startingdatarow = 1     #indicates which row to start writing data to
+#        ws.repeat_rows(startingdatarow-1) #repeats header row on each page for printing (r-1 because it uses excel row numbers, not 0-index rows)
+#        #write header
+#        ws.write(startingdatarow-1,0,'Fund',fmt_dataheader)
+#        ws.write(startingdatarow-1,1,'Fund Address',fmt_dataheader)
+#        ws.write(startingdatarow-1,2,'Appeal ID',fmt_dataheader)
+#        ws.write(startingdatarow-1,3,'Gift Date',fmt_dataheader)
+#        ws.write(startingdatarow-1,4,'Name',fmt_dataheader)
+#        ws.write(startingdatarow-1,5,'Reference',fmt_dataheader)
+#        ws.write(startingdatarow-1,6,'Fund Split Amount',fmt_dataheader)
+#        r = startingdatarow
+#        r_hold = startingdatarow
+#        widths = [10,10,10,10,10,10,10]
+#        widths_hold = [10,10,10,10,10,10,10]
+#        for row in data.iterrows():
+#            r, widths = writerow(ws,r,group,row,widths)
+#        ws.set_column(0,0,widths[0])
+#        ws.set_column(1,1,widths[1])
+#        ws.set_column(2,2,widths[2])
+#        ws.set_column(3,3,widths[3])
+#        ws.set_column(4,4,widths[4])
+#        ws.set_column(5,5,widths[5])
+#        ws.set_column(6,6,widths[6])
 print("Done!")

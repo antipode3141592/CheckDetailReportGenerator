@@ -69,10 +69,10 @@ for row in cursor:
 contactlist = pd.DataFrame.from_records(np.array(data))
 outlook = win32.DispatchEx('outlook.application')
 #file paths
-path_root = "C:\\Users\\skirkpatrick\\Documents\\Work for Art\\DG Pledge Notification Reports\\"
-path_input = "C:\\Users\\skirkpatrick\\Documents\\Work for Art\\DG Pledge Notification Reports\\Input\\"
-path_output = "C:\\Users\\skirkpatrick\\Documents\\Work for Art\\DG Pledge Notification Reports\\Output\\"
-path_errors = "C:\\Users\\skirkpatrick\\Documents\\Work for Art\\DG Pledge Notification Reports\\Errors\\"
+path_root = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
+path_input = path_root + "Outgoing\\"
+path_output = path_root + "Processed\\"
+path_errors = path_root + "Errors\\"
 file_ACH = path_root + "RACC AUTHORIZATION FOR DIRECT DEPOSIT.pdf"
 file_emailbody = path_root + "dg payment email.txt"
 file_emailbody2 = path_root + "dg payment email - no ach.txt"

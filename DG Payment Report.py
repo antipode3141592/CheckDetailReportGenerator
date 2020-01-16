@@ -135,8 +135,8 @@ cursor = cnxn.cursor()
 
 #-----------------------------------------------------------------
 #inputs
-startdate = '2018-07-01'    #YYYY-DD-MM format
-enddate = '2018-11-30'
+startdate = '2019-12-01'    #YYYY-DD-MM format
+enddate = '2019-12-31'
 #-----------------------------------------------------------------
 
 
@@ -162,7 +162,7 @@ df_addresses = pd.DataFrame.from_records(np.array(data),columns=columns)
 
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
 outputpath = "C:\\Users\\skirkpatrick\\Coding\\Python\\Outgoing\\"
-fl = filepath + "Check Request - Quarter end 11.30.2018.xlsx"
+fl = filepath + "Check Request - Quarter end 12-31-2019.xlsx"
 
 #create primary DG payment report (single file)
 with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
@@ -199,8 +199,8 @@ with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     #Check Request Worksheet and Hold Worksheet
     # currently, Check Request sheet must have one last manual step, selecting the whole table (data + headers) and then Data->Subtotal sum by Fund Split Amount
     # 
-    header1 = "&LWFA Designated Gift Check Request" + "&CIncludes gifts with dates between " + startdate + " and " + enddate
-    footer1 = "&LCoding: 01-5210-Other-280-0-0-0" + "&RApproved as per WFA Designated Gifts for April thru June 2018"
+    header1 = "&LAIF Designated Gift Check Request" + "&CIncludes gifts with dates between " + startdate + " and " + enddate
+    footer1 = "&LCoding: 01-5210-Other-280-0-0-0" + "&RApproved as per AIF Designated Gifts for November thru December 2019"
     ws = wb.add_worksheet("Check Request");
     ws.set_header(header1)
     ws.set_footer(footer1)
@@ -257,8 +257,8 @@ with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     #Mail Merge
     # currently, Check Request sheet must have one last manual step, selecting the whole table (data + headers) and then Data->Subtotal sum by Fund Split Amount
     # 
-    header1 = "&LWFA Designated Gift Check Request" + "&CIncludes gifts with dates between " + startdate + " and " + enddate
-    footer1 = "&LCoding: 01-5210-Other-280-0-0-0" + "&RApproved as per WFA Designated Gifts for July thru November 2018"
+    header1 = "&LAIF Designated Gift Check Request" + "&CIncludes gifts with dates between " + startdate + " and " + enddate
+    footer1 = "&LCoding: 01-5210-Other-280-0-0-0" + "&RApproved as per AIF Designated Gifts for November thru December 2019"
     ws = wb.add_worksheet("Mail Merge");
     ws.set_header(header1)
     ws.set_footer(footer1)

@@ -43,24 +43,48 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import win32com.client as win32
+import pyodbc 
 import os
+import numpy as np
 import pandas as pd
+
+#small function for replacing os-restricted characters in filenames
+def sterilizestring (s):
+    for char in "?.!/;:":
+        s = s.replace(char,'_');
+    return s
+
 
 outlook = win32.DispatchEx('outlook.application')   #TODO: modify to use any e-mail, not just control Outlook
 
 #file paths
 path_root = "C:\\Users\\skirkpatrick\\Documents\\Work for Art\\DG Pledge Notification Reports\\"
-path_contactlist = "//concordia/lancentral/Work for Art/Designated Gifts/DG Pledge Reports//"   #network locations use forward slashes
+#path_contactlist = "//concordia/lancentral/Work for Art/Designated Gifts/DG Pledge Reports//"   #network locations use forward slashes
 path_input = "C:\\Users\\skirkpatrick\\Documents\\Work for Art\\DG Pledge Notification Reports\\Input\\"
 path_output = "C:\\Users\\skirkpatrick\\Documents\\Work for Art\\DG Pledge Notification Reports\\Output\\"
 path_errors = "C:\\Users\\skirkpatrick\\Documents\\Work for Art\\DG Pledge Notification Reports\\Errors\\"
 file_emailbody = path_root + "email template.txt"
-file_contactlist = path_contactlist + "DG Arts Org Email List for Pledge reports.xlsx"
+
+##this contact list is populated by 
+#file_contactlist = path_root + "DG Emails.xlsx"
+#populate contact list dataframe from database
+cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};" #requires explicitily stating the sql driver
+                      "Server=overlook;"
+                      "Database=re_racc;"
+                      "Trusted_Connection=yes;")    #use windows integrated security
+cursor = cnxn.cursor()
+#note: turned the query into a stored procedure for better security (but there aren't parameters, so probably unnecessary?)
+#cursor.execute("select a.DESCRIPTION, a.FUND_ID, b.LONGDESCRIPTION as Category, d.CONSTITUENT_ID, d.ORG_NAME, e.num as Email, f.LONGDESCRIPTION as Type from FUND a join TABLEENTRIES b on (a.FUND_CATEGORY = b.TABLEENTRIESID) join FUND_ORG_RELATIONSHIPS c on (a.ID = c.FUND_ID) join RECORDS d on (c.CONSTIT_ID = d.ID) join PHONES e on (e.CONSTIT_ID = d.ID) join TABLEENTRIES f on (e.PHONETYPEID =  f.TABLEENTRIESID) where b.LONGDESCRIPTION = 'Designated' and f.LONGDESCRIPTION like 'E-Mail%' and e.CONSTIT_RELATIONSHIPS_ID is null order by a.DESCRIPTION, f.LONGDESCRIPTION")
+cursor.execute("sp_getdgfundemails")
+data = []   #grab results, put into a list, put list into numpy array, and then put numpy array into pandas dataframe
+for row in cursor:
+    data.append(tuple(row))
+contactlist = pd.DataFrame.from_records(np.array(data))
 
 #load data
 message_body = open(file_emailbody).read()  #load message body from file
-wb = pd.ExcelFile(file_contactlist)
-df1 = wb.parse('Contacts')  #parse contents of excel file into Pandas dataframe
+#wb = pd.ExcelFile(file_contactlist)
+#df1 = wb.parse('Contacts')  #parse contents of excel file into Pandas dataframe
 
 #initialize lists
 files_good = []
@@ -71,9 +95,14 @@ for f in os.listdir(path_input):
     _f = f.split(" - ")                 #split filename of form "Org Name - New Pledges through Work for Art.xlxs" into array _f
     validemailacount = 0
     emaillist = []      #list of e-mails to send to (each item might need to be mailed to multiple addresses)
-    for index, row in df1.iterrows():   #iterate over all rows, searching for matches
-        if row[1] == _f[0]:             #if Org Name matches File Name, add e-mail to list
-            emaillist.append(row[6])
+    #for index, row in df1.iterrows():   #iterate over all rows, searching for matches
+    #    if row[0] == _f[0]:             #if column 1 (org abbreviation) matches 1st part of File Name, add e-mail to list
+    #        emaillist.append(row[2])    #linear search, iterate overy every row, slow, but workable
+    #        validemailacount += 1
+    for index, row in contactlist.iterrows():   #iterate over all rows, searching for matches
+        if sterilizestring(row[1]) == sterilizestring(_f[0]):             #if Org Name matches File Name, add e-mail to list
+            emaillist.append(row[5])
+            ach = row[7]
             validemailacount += 1
     if validemailacount == 0:    #if no valid matches, print error and save filename in error list
         files_error.append(f)
@@ -87,7 +116,7 @@ for f in os.listdir(path_input):
         print("Sending email to: ", stringemail)
         mail = outlook.CreateItem(0)
         mail.To = stringemail
-        mail.Subject = 'New Pledges through Work for Art'
+        mail.Subject = 'Pledges Received through Arts Impact Fund'
         mail.Body = message_body
         mail.Attachments.Add(path_input + f) #f is the excel report filename
         mail.Send()

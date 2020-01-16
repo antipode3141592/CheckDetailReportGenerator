@@ -33,7 +33,7 @@ import pandas as pd
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 from xlsxwriter.utility import xl_range
-import win32com.client as win32
+#import win32com.client as win32
 import pyodbc 
 import os
 import numpy as np
@@ -105,7 +105,7 @@ cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};" #requires explic
                       "Trusted_Connection=yes;")    #use windows integrated security
 cursor = cnxn.cursor()
 startdate = '2018-07-01'
-enddate = '2018-11-30'
+enddate = '2019-06-30'
 sqlcommand = 'exec sp_giftreconreport ''?'', ''?'''
 sqlparams = (startdate,enddate)
 cursor.execute(sqlcommand,sqlparams)
@@ -119,7 +119,7 @@ df = pd.DataFrame.from_records(np.array(data),columns=columns)
 #print(df.shape)
 
 filepath = "C:\\Users\\skirkpatrick\\Coding\\Python\\"
-fl = filepath + "RE YTD Cash Receipts thru 9.30.2018.xlsx"
+fl = filepath + "RE YTD Cash Receipts thru 6.30.2019.xlsx"
 with xlsxwriter.Workbook(fl, {'nan_inf_to_errors': True}) as wb:
     fmt_money = wb.add_format({'num_format': '$#,##0.00'})
     fmt_date = wb.add_format({'num_format': 'mm/dd/yyyy'})
