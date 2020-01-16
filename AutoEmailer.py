@@ -74,7 +74,7 @@ cnxn = pyodbc.connect("Driver={SQL Server Native Client 11.0};" #requires explic
                       "Trusted_Connection=yes;")    #use windows integrated security
 cursor = cnxn.cursor()
 #note: turned the query into a stored procedure for better security (but there aren't parameters, so probably unnecessary?)
-#cursor.execute("select a.DESCRIPTION, a.FUND_ID, b.LONGDESCRIPTION as Category, d.CONSTITUENT_ID, d.ORG_NAME, e.num as Email, f.LONGDESCRIPTION as Type from FUND a join TABLEENTRIES b on (a.FUND_CATEGORY = b.TABLEENTRIESID) join FUND_ORG_RELATIONSHIPS c on (a.ID = c.FUND_ID) join RECORDS d on (c.CONSTIT_ID = d.ID) join PHONES e on (e.CONSTIT_ID = d.ID) join TABLEENTRIES f on (e.PHONETYPEID =  f.TABLEENTRIESID) where b.LONGDESCRIPTION = 'Designated' and f.LONGDESCRIPTION like 'E-Mail%' and e.CONSTIT_RELATIONSHIPS_ID is null order by a.DESCRIPTION, f.LONGDESCRIPTION")
+#cursor.execute("select a.DESCRIPTION, a.FUND_ID, b.LONGDESCRIPTION as Category, d.CONSTITUENT_ID, d.ORG_NAME, e.num as Email, f.LONGDESCRIPTION as Type from FUND a join TABLEENTRIES b on (a.FUND_CATEGORY = b.TABLEENTRIESID) join FUND_ORG_RELATIONSHIPS c on (a.ID = c.FUND_ID) join RECORDS d on (c.CONSTIT_ID = d.ID) join PHONES e on (e.CONSTIT_ID = d.ID) join TABLEENTRIES f on (e.PHONETYPEID =  f.TABLEENTRIESID) where b.LONGDESCRIPTION = 'Designated' and f.LONGDESCRIPTION like 'E-Mail%' and e.CONSTIT_RELATIONSHIPS_ID is null AND e.INACTIVE = 0 order by a.DESCRIPTION, f.LONGDESCRIPTION")
 cursor.execute("sp_getdgfundemails")
 data = []   #grab results, put into a list, put list into numpy array, and then put numpy array into pandas dataframe
 for row in cursor:
